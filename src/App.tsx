@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Sparkles, Rocket, Palette, Heart } from "lucide-react";
+import { Rocket, Palette, Heart } from "lucide-react";
 
 function App() {
   return (
