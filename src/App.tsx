@@ -10,7 +10,7 @@ import BrandSettings from "@/pages/BrandSettings";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/vibe-coding-Brand-Project-1-repo">
       <Routes>
         <Route element={<BrandPortalLayout />}>
           <Route path="/" element={<Dashboard />} />
