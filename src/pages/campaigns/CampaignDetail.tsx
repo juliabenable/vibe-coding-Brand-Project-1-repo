@@ -144,11 +144,13 @@ function BudgetTracker({ campaign }: { campaign: Campaign }) {
 }
 
 // ─── Rich Creator Card ───
-function CreatorCard({ creator, campaign, expanded, onToggle }: {
+function CreatorCard({ creator, campaign, expanded, onToggle, onAccept, onReject }: {
   creator: CreatorAssignment;
   campaign: Campaign;
   expanded: boolean;
   onToggle: () => void;
+  onAccept?: () => void;
+  onReject?: () => void;
 }) {
   const statusConfig = statusStyles[creator.status];
   const enabledCompTypes = campaign.compensationTypes.filter((c) => c.enabled);
@@ -227,14 +229,34 @@ function CreatorCard({ creator, campaign, expanded, onToggle }: {
             </Badge>
           )}
 
-          <div className="flex gap-0.5">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--neutral-500)] hover:text-[var(--brand-700)]">
-              <MessageSquare className="size-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--neutral-500)] hover:text-[var(--brand-700)]">
-              <Eye className="size-3.5" />
-            </Button>
-          </div>
+          {creator.status === "recommended" && onAccept && onReject ? (
+            <div className="flex gap-1.5">
+              <Button
+                size="sm"
+                className="h-7 gap-1 bg-[var(--green-500)] hover:bg-[var(--green-600)] text-white text-xs px-2.5"
+                onClick={(e) => { e.stopPropagation(); onAccept(); }}
+              >
+                <Check className="size-3" /> Add
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 border-[var(--neutral-300)] text-[var(--neutral-600)] text-xs px-2.5 hover:border-[var(--red-300)] hover:text-[var(--red-500)]"
+                onClick={(e) => { e.stopPropagation(); onReject(); }}
+              >
+                <X className="size-3" /> Skip
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-0.5">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--neutral-500)] hover:text-[var(--brand-700)]">
+                <MessageSquare className="size-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--neutral-500)] hover:text-[var(--brand-700)]">
+                <Eye className="size-3.5" />
+              </Button>
+            </div>
+          )}
 
           <ChevronDown className={`size-4 text-[var(--neutral-400)] transition-transform ${expanded ? "rotate-180" : ""}`} />
         </div>
@@ -490,6 +512,18 @@ export default function CampaignDetail() {
   const { id } = useParams();
   const campaign = MOCK_CAMPAIGNS.find((c) => c.id === id);
   const [expandedCreator, setExpandedCreator] = useState<string | null>(null);
+  const [creatorStatuses, setCreatorStatuses] = useState<Record<string, CreatorStatus>>({});
+
+  const getCreatorStatus = (creator: CreatorAssignment): CreatorStatus =>
+    creatorStatuses[creator.creatorId] ?? creator.status;
+
+  const acceptCreator = (creatorId: string) => {
+    setCreatorStatuses((prev) => ({ ...prev, [creatorId]: "invited" }));
+  };
+
+  const rejectCreator = (creatorId: string) => {
+    setCreatorStatuses((prev) => ({ ...prev, [creatorId]: "declined" }));
+  };
 
   if (!campaign) {
     return (
@@ -697,47 +731,143 @@ export default function CampaignDetail() {
 
         {/* Creators tab */}
         <TabsContent value="creators" className="space-y-4">
-          {campaign.mode === "open" && (
-            <Card className="border-[var(--brand-200)] bg-[var(--brand-0)]">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="size-5 text-[var(--brand-700)]" />
-                    <div>
-                      <p className="text-sm font-bold text-[var(--neutral-800)]">
-                        Recommended Creators
-                      </p>
-                      <p className="text-xs text-[var(--neutral-500)]">
-                        Benable has surfaced matches based on your campaign criteria. Click any creator to see full profile, engagement data, and audience demographics.
-                      </p>
+          {(() => {
+            const creatorsWithStatus = campaign.creators.map((c) => ({
+              ...c,
+              status: getCreatorStatus(c),
+            }));
+            const recommended = creatorsWithStatus.filter((c) => c.status === "recommended");
+            const accepted = creatorsWithStatus.filter((c) => c.status !== "recommended" && c.status !== "declined");
+            const declined = creatorsWithStatus.filter((c) => c.status === "declined");
+
+            return (
+              <>
+                {/* Recommended creators banner */}
+                {recommended.length > 0 && (
+                  <>
+                    <Card className="border-[var(--brand-200)] bg-[var(--brand-0)]">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Sparkles className="size-5 text-[var(--brand-700)]" />
+                            <div>
+                              <p className="text-sm font-bold text-[var(--neutral-800)]">
+                                Recommended Creators ({recommended.length})
+                              </p>
+                              <p className="text-xs text-[var(--neutral-500)]">
+                                Review each creator and add them to your campaign or skip. Click to expand profile details.
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="gap-1.5 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
+                            onClick={() => {
+                              recommended.forEach((c) => acceptCreator(c.creatorId));
+                            }}
+                          >
+                            <UserPlus className="size-3.5" /> Add All ({recommended.length})
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="space-y-2">
+                      {recommended.map((creator) => (
+                        <CreatorCard
+                          key={creator.creatorId}
+                          creator={creator}
+                          campaign={campaign}
+                          expanded={expandedCreator === creator.creatorId}
+                          onToggle={() =>
+                            setExpandedCreator(
+                              expandedCreator === creator.creatorId ? null : creator.creatorId
+                            )
+                          }
+                          onAccept={() => acceptCreator(creator.creatorId)}
+                          onReject={() => rejectCreator(creator.creatorId)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Accepted / active creators */}
+                {accepted.length > 0 && (
+                  <>
+                    {recommended.length > 0 && (
+                      <div className="flex items-center gap-2 pt-2">
+                        <div className="h-px flex-1 bg-[var(--neutral-200)]" />
+                        <span className="text-xs font-medium text-[var(--neutral-500)] uppercase tracking-wider">
+                          Campaign Creators ({accepted.length})
+                        </span>
+                        <div className="h-px flex-1 bg-[var(--neutral-200)]" />
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {accepted.map((creator) => (
+                        <CreatorCard
+                          key={creator.creatorId}
+                          creator={creator}
+                          campaign={campaign}
+                          expanded={expandedCreator === creator.creatorId}
+                          onToggle={() =>
+                            setExpandedCreator(
+                              expandedCreator === creator.creatorId ? null : creator.creatorId
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Declined creators (collapsed) */}
+                {declined.length > 0 && (
+                  <div className="pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-[var(--neutral-200)]" />
+                      <span className="text-xs font-medium text-[var(--neutral-400)] uppercase tracking-wider">
+                        Skipped ({declined.length})
+                      </span>
+                      <div className="h-px flex-1 bg-[var(--neutral-200)]" />
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {declined.map((creator) => (
+                        <div
+                          key={creator.creatorId}
+                          className="flex items-center justify-between rounded-lg border border-[var(--neutral-200)] p-3 opacity-60"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={creator.creatorAvatar}
+                              alt={creator.creatorName}
+                              className="h-8 w-8 rounded-full object-cover grayscale"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <div>
+                              <span className="text-sm text-[var(--neutral-600)]">{creator.creatorName}</span>
+                              <span className="ml-2 text-xs text-[var(--neutral-400)]">{creator.creatorHandle}</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-[var(--neutral-500)] hover:text-[var(--brand-700)]"
+                            onClick={() => acceptCreator(creator.creatorId)}
+                          >
+                            Undo
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    className="gap-1.5 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
-                  >
-                    <UserPlus className="size-3.5" /> Select All Recommended
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="space-y-2">
-            {campaign.creators.map((creator) => (
-              <CreatorCard
-                key={creator.creatorId}
-                creator={creator}
-                campaign={campaign}
-                expanded={expandedCreator === creator.creatorId}
-                onToggle={() =>
-                  setExpandedCreator(
-                    expandedCreator === creator.creatorId ? null : creator.creatorId
-                  )
-                }
-              />
-            ))}
-          </div>
+                )}
+              </>
+            );
+          })()}
         </TabsContent>
 
         {/* Content Gallery tab */}

@@ -13,7 +13,7 @@ export type BudgetType = "spend_cap" | "product_inventory" | "flexible" | "spend
 export type CompensationType = "gifted" | "gift_card" | "discount" | "paid" | "commission_boost";
 export type CampaignStatus = "draft" | "active" | "filled" | "completed";
 export type CreatorCountTarget = "5-15" | "15-30" | "30+";
-export type CreatorType = "nano" | "micro" | "mid" | "macro" | "any";
+export type CreatorType = "any" | "pico" | "nano" | "micro";
 
 export type ContentRequirement =
   | "show_product_in_use"
@@ -51,7 +51,7 @@ export interface CampaignDraft {
   budgetInventoryCount?: number;
   budgetProductName?: string;
   creatorCountTarget?: CreatorCountTarget;
-  creatorType?: CreatorType;
+  creatorTypes: CreatorType[];
   creatorCount?: number;
   creatorCategories: string[];
   selectedCreators: string[];
@@ -90,7 +90,7 @@ export const emptyCampaignDraft: CampaignDraft = {
   budgetInventoryCount: undefined,
   budgetProductName: undefined,
   creatorCountTarget: undefined,
-  creatorType: undefined,
+  creatorTypes: [],
   creatorCount: undefined,
   creatorCategories: [],
   selectedCreators: [],
@@ -187,6 +187,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     budgetInventoryCount: 50,
     budgetProductName: "Melted Balm",
     creatorCountTarget: "15-30",
+    creatorTypes: ["nano", "micro"],
     creatorCategories: ["Beauty", "Wellness", "Lifestyle"],
     selectedCreators: [],
     compensationTypes: [
@@ -321,6 +322,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     budgetType: "spend_cap",
     budgetCapAmount: 15000,
     creatorCountTarget: undefined,
+    creatorTypes: ["any"],
     creatorCategories: [],
     selectedCreators: ["cr-004", "cr-005", "cr-006"],
     compensationTypes: [

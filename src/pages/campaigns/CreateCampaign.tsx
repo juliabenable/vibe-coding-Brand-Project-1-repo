@@ -95,13 +95,12 @@ const CONTENT_FORMAT_OPTIONS: { value: ContentFormat; label: string; group: stri
   { value: "tiktok_video", label: "TikTok Video", group: "TikTok" },
 ];
 
-// ─── Creator type options ───
+// ─── Creator type options (Open to all first, then tiers) ───
 const CREATOR_TYPE_OPTIONS: { value: CreatorType; label: string; desc: string }[] = [
+  { value: "any", label: "Open to all", desc: "We'll recommend the best fit across all tiers" },
+  { value: "pico", label: "Pico (< 1K)", desc: "Ultra-niche, highly authentic audiences" },
   { value: "nano", label: "Nano (1K–10K)", desc: "Highly engaged, niche audiences" },
   { value: "micro", label: "Micro (10K–50K)", desc: "Strong engagement, growing reach" },
-  { value: "mid", label: "Mid-tier (50K–200K)", desc: "Balanced reach and engagement" },
-  { value: "macro", label: "Macro (200K+)", desc: "Wide reach, established influence" },
-  { value: "any", label: "Any / Open to all", desc: "We'll recommend the best fit" },
 ];
 
 // ═══════════════════════════════════════════════════
@@ -890,32 +889,43 @@ function Step2({
         </p>
 
         <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label className="text-sm font-medium text-[var(--neutral-800)]">
-              Creator Type
+              Creator Type <span className="text-xs font-normal text-[var(--neutral-500)]">(select all that apply)</span>
             </Label>
-            <Select
-              value={draft.creatorType || ""}
-              onValueChange={(v) => update("creatorType", v as CreatorType)}
-            >
-              <SelectTrigger className="border-[var(--neutral-200)]">
-                <SelectValue placeholder="Select creator tier..." />
-              </SelectTrigger>
-              <SelectContent>
-                {CREATOR_TYPE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    <div className="flex flex-col">
-                      <span>{opt.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {draft.creatorType && (
-              <p className="text-xs text-[var(--neutral-500)]">
-                {CREATOR_TYPE_OPTIONS.find((o) => o.value === draft.creatorType)?.desc}
-              </p>
-            )}
+            {CREATOR_TYPE_OPTIONS.map((opt) => {
+              const isAny = opt.value === "any";
+              const checked = draft.creatorTypes.includes(opt.value);
+              const isDisabledByAny = !isAny && draft.creatorTypes.includes("any");
+              return (
+                <div key={opt.value} className="flex items-start gap-3">
+                  <Checkbox
+                    checked={checked}
+                    disabled={isDisabledByAny}
+                    onCheckedChange={(c) => {
+                      if (isAny) {
+                        // "Open to all" clears specific selections
+                        update("creatorTypes", c ? ["any"] : []);
+                      } else {
+                        const next = c
+                          ? [...draft.creatorTypes.filter((t) => t !== "any"), opt.value]
+                          : draft.creatorTypes.filter((t) => t !== opt.value);
+                        update("creatorTypes", next as CreatorType[]);
+                      }
+                    }}
+                    className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
+                  />
+                  <div>
+                    <p className={`text-sm font-medium ${isDisabledByAny ? "text-[var(--neutral-400)]" : "text-[var(--neutral-800)]"}`}>
+                      {opt.label}
+                    </p>
+                    <p className={`text-xs ${isDisabledByAny ? "text-[var(--neutral-300)]" : "text-[var(--neutral-500)]"}`}>
+                      {opt.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="space-y-2">
@@ -993,11 +1003,10 @@ function Step3({
   };
 
   const creatorTypeLabels: Record<CreatorType, string> = {
+    any: "Open to all",
+    pico: "Pico (< 1K)",
     nano: "Nano (1K–10K)",
     micro: "Micro (10K–50K)",
-    mid: "Mid-tier (50K–200K)",
-    macro: "Macro (200K+)",
-    any: "Any / Open to all",
   };
 
   const enabledComps = draft.compensationTypes.filter((c) => c.enabled);
@@ -1166,7 +1175,9 @@ function Step3({
             <div>
               <p className="text-[var(--neutral-500)]">Creator Type</p>
               <p className="font-medium text-[var(--neutral-800)]">
-                {draft.creatorType ? creatorTypeLabels[draft.creatorType] : "—"}
+                {draft.creatorTypes.length > 0
+                  ? draft.creatorTypes.map((t) => creatorTypeLabels[t]).join(", ")
+                  : "—"}
               </p>
             </div>
             <div>
