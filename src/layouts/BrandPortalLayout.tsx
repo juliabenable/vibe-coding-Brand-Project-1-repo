@@ -23,6 +23,7 @@ import {
   Users,
   MessageSquare,
   Settings,
+  Bell,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -146,6 +147,16 @@ export default function BrandPortalLayout() {
       </Sidebar>
 
       <SidebarInset>
+        {/* Top bar with notification bell */}
+        <div className="sticky top-0 z-10 flex items-center justify-end border-b border-[var(--neutral-200)] bg-white/95 backdrop-blur-sm px-8 py-3">
+          <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--neutral-600)] transition-colors hover:bg-[var(--neutral-100)] hover:text-[var(--neutral-800)]">
+            <Bell className="size-5" />
+            <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--red-500)] text-[9px] font-bold text-white">
+              3
+            </span>
+          </button>
+        </div>
+
         <div className="flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-[1100px] px-8 py-8">
             <Outlet />

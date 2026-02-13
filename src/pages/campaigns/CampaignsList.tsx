@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, ArrowRight } from "lucide-react";
 import { MOCK_CAMPAIGNS } from "@/store/campaign-store";
 import type { CampaignStatus } from "@/store/campaign-store";
+import { formatDateRange } from "@/lib/format";
 
 const statusStyles: Record<CampaignStatus, { label: string; className: string }> = {
   draft: { label: "Draft", className: "bg-[var(--neutral-100)] text-[var(--neutral-600)]" },
@@ -76,7 +77,7 @@ export default function CampaignsList() {
                     <div className="mt-3 flex items-center gap-6 text-sm text-[var(--neutral-600)]">
                       <span>{campaign.creators.length} creators</span>
                       <span>
-                        {campaign.flightDateStart} — {campaign.flightDateEnd}
+                        {formatDateRange(campaign.flightDateStart, campaign.flightDateEnd)}
                       </span>
                       <span className="flex items-center gap-1.5">
                         {campaign.platforms.map((p) => (

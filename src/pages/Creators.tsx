@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Star, ExternalLink } from "lucide-react";
+import { Search, Filter, Star, ExternalLink, TrendingUp, Heart, MapPin } from "lucide-react";
 import { MOCK_CAMPAIGNS } from "@/store/campaign-store";
 import type { CreatorAssignment, Platform } from "@/store/campaign-store";
+import { formatFollowers } from "@/lib/format";
 
 // Aggregate unique creators from all campaigns
 function getUniqueCreators(): (CreatorAssignment & { campaignCount: number; campaignNames: string[] })[] {
@@ -77,33 +78,59 @@ export default function Creators() {
             className="shadow-light-top border-[var(--neutral-200)] transition-shadow hover:shadow-medium-top"
           >
             <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--brand-200)] text-sm font-bold text-[var(--brand-800)]">
-                    {creator.creatorName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-[var(--neutral-800)]">
-                        {creator.creatorName}
-                      </p>
-                      {creator.isExclusive && (
-                        <Badge className="border-0 bg-[var(--brand-100)] text-[var(--brand-700)] text-[10px] font-medium">
-                          <Star className="mr-0.5 size-2.5" /> Exclusive
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-[var(--neutral-500)]">
-                      {creator.creatorHandle}
+              <div className="flex items-start gap-3">
+                <img
+                  src={creator.creatorAvatar}
+                  alt={creator.creatorName}
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-[var(--neutral-100)]"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-[var(--neutral-800)] truncate">
+                      {creator.creatorName}
                     </p>
+                    {creator.isExclusive && (
+                      <Badge className="border-0 bg-[var(--brand-100)] text-[var(--brand-700)] text-[10px] font-medium shrink-0">
+                        <Star className="mr-0.5 size-2.5" /> Exclusive
+                      </Badge>
+                    )}
                   </div>
+                  <p className="text-xs text-[var(--neutral-500)]">
+                    {creator.creatorHandle}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-1.5">
+              {/* Bio */}
+              <p className="mt-3 text-xs text-[var(--neutral-600)] line-clamp-2">
+                {creator.bio}
+              </p>
+
+              {/* Stats row */}
+              <div className="mt-3 flex items-center gap-4 text-xs text-[var(--neutral-600)]">
+                <span className="font-medium">{formatFollowers(creator.followerCount)} followers</span>
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="size-3 text-[var(--green-500)]" />
+                  {creator.engagementRate}% ER
+                </span>
+                <span className="flex items-center gap-1">
+                  <Heart className="size-3 text-[var(--red-400)]" />
+                  {creator.avgLikes} avg
+                </span>
+              </div>
+
+              {/* Audience snapshot */}
+              <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--neutral-500)]">
+                <span>{creator.audienceTopAge}</span>
+                <span>{creator.audienceTopGender}</span>
+                <span className="flex items-center gap-0.5">
+                  <MapPin className="size-2.5" />
+                  {creator.audienceTopLocation}
+                </span>
+              </div>
+
+              {/* Platform & category tags */}
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {creator.platforms.map((p) => (
                   <Badge
                     key={p}
@@ -124,22 +151,38 @@ export default function Creators() {
                 ))}
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
+              {/* Recent content thumbnails */}
+              {creator.recentPostThumbnails.length > 0 && (
+                <div className="mt-3 flex gap-1.5">
+                  {creator.recentPostThumbnails.slice(0, 3).map((thumb, i) => (
+                    <img
+                      key={i}
+                      src={thumb}
+                      alt="Recent post"
+                      className="h-14 w-14 rounded-md object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Actions — secondary first, primary second */}
+              <div className="mt-4 flex items-center justify-between border-t border-[var(--neutral-100)] pt-3">
                 <p className="text-xs text-[var(--neutral-500)]">
-                  {creator.followerCount.toLocaleString()} followers &middot;{" "}
                   {creator.campaignCount} campaign{creator.campaignCount > 1 ? "s" : ""}
+                  {creator.pastCampaignCount > 0 ? ` · ${creator.pastCampaignCount} past collabs` : ""}
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs text-[var(--brand-700)]"
+                    className="h-7 text-xs text-[var(--neutral-600)]"
                   >
-                    <ExternalLink className="mr-1 size-3" /> View Profile
+                    <ExternalLink className="mr-1 size-3" /> Profile
                   </Button>
                   <Button
+                    variant="outline"
                     size="sm"
-                    className="h-7 bg-[var(--brand-700)] text-xs hover:bg-[var(--brand-800)]"
+                    className="h-7 text-xs border-[var(--brand-700)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
                   >
                     Invite to Campaign
                   </Button>
