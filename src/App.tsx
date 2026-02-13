@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import BrandPortalLayout from "@/layouts/BrandPortalLayout";
 import Dashboard from "@/pages/Dashboard";
 import CampaignsList from "@/pages/campaigns/CampaignsList";
@@ -10,7 +10,7 @@ import BrandSettings from "@/pages/BrandSettings";
 
 export default function App() {
   return (
-    <BrowserRouter basename="/vibe-coding-Brand-Project-1-repo">
+    <HashRouter>
       <Routes>
         <Route element={<BrandPortalLayout />}>
           <Route path="/" element={<Dashboard />} />
@@ -22,6 +22,6 @@ export default function App() {
           <Route path="/settings" element={<BrandSettings />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
