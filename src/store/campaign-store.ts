@@ -9,10 +9,11 @@ export type ContentFormat =
   | "instagram_story"
   | "tiktok_video"
   | "benable_post";
-export type BudgetType = "spend_cap" | "product_inventory" | "flexible";
+export type BudgetType = "spend_cap" | "product_inventory" | "flexible" | "spend_cap_and_inventory";
 export type CompensationType = "gifted" | "gift_card" | "discount" | "paid" | "commission_boost";
 export type CampaignStatus = "draft" | "active" | "filled" | "completed";
 export type CreatorCountTarget = "5-15" | "15-30" | "30+";
+export type CreatorType = "nano" | "micro" | "mid" | "macro" | "any";
 
 export type ContentRequirement =
   | "show_product_in_use"
@@ -50,6 +51,8 @@ export interface CampaignDraft {
   budgetInventoryCount?: number;
   budgetProductName?: string;
   creatorCountTarget?: CreatorCountTarget;
+  creatorType?: CreatorType;
+  creatorCount?: number;
   creatorCategories: string[];
   selectedCreators: string[];
   compensationTypes: CompensationConfig[];
@@ -87,6 +90,8 @@ export const emptyCampaignDraft: CampaignDraft = {
   budgetInventoryCount: undefined,
   budgetProductName: undefined,
   creatorCountTarget: undefined,
+  creatorType: undefined,
+  creatorCount: undefined,
   creatorCategories: [],
   selectedCreators: [],
   compensationTypes: [...defaultCompensationTypes],

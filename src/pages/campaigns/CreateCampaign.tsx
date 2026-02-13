@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,7 +22,6 @@ import {
   ArrowLeft,
   Check,
   Upload,
-  Rocket,
   Gift,
   CreditCard,
   Tag,
@@ -31,6 +29,7 @@ import {
   TrendingUp,
   Lock,
   FileText,
+  Search,
 } from "lucide-react";
 import {
   emptyCampaignDraft,
@@ -41,6 +40,7 @@ import {
   type CompensationType,
   type ContentRequirement,
   type ContentFormat,
+  type CreatorType,
 } from "@/store/campaign-store";
 
 // ─── Step indicator ───
@@ -86,41 +86,22 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
-// ─── Budget bar (persistent) ───
-function BudgetBar({ draft }: { draft: CampaignDraft }) {
-  if (draft.budgetType === "flexible" || !draft.budgetType) return null;
-
-  const cap =
-    draft.budgetType === "spend_cap"
-      ? draft.budgetCapAmount || 0
-      : draft.budgetInventoryCount || 0;
-  const allocated = 0;
-  const percent = cap > 0 ? Math.round((allocated / cap) * 100) : 0;
-  const label =
-    draft.budgetType === "spend_cap"
-      ? `$${allocated.toLocaleString()} / $${cap.toLocaleString()}`
-      : `${allocated} / ${cap} units`;
-
-  return (
-    <div className="mb-6 rounded-lg border border-[var(--neutral-200)] bg-[var(--neutral-100)] p-4">
-      <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="text-[var(--neutral-600)]">Budget</span>
-        <span className="font-medium text-[var(--neutral-800)]">
-          {label} allocated
-        </span>
-      </div>
-      <Progress value={percent} className="h-2 bg-[var(--neutral-200)]" />
-    </div>
-  );
-}
-
-// ─── Content format options ───
+// ─── Content format options (Benable Post on top) ───
 const CONTENT_FORMAT_OPTIONS: { value: ContentFormat; label: string; group: string }[] = [
+  { value: "benable_post", label: "Benable Post", group: "Benable" },
   { value: "instagram_post", label: "Instagram Post", group: "Instagram" },
   { value: "instagram_reel", label: "Instagram Reel", group: "Instagram" },
   { value: "instagram_story", label: "Instagram Story", group: "Instagram" },
   { value: "tiktok_video", label: "TikTok Video", group: "TikTok" },
-  { value: "benable_post", label: "Benable Post", group: "Benable" },
+];
+
+// ─── Creator type options ───
+const CREATOR_TYPE_OPTIONS: { value: CreatorType; label: string; desc: string }[] = [
+  { value: "nano", label: "Nano (1K–10K)", desc: "Highly engaged, niche audiences" },
+  { value: "micro", label: "Micro (10K–50K)", desc: "Strong engagement, growing reach" },
+  { value: "mid", label: "Mid-tier (50K–200K)", desc: "Balanced reach and engagement" },
+  { value: "macro", label: "Macro (200K+)", desc: "Wide reach, established influence" },
+  { value: "any", label: "Any / Open to all", desc: "We'll recommend the best fit" },
 ];
 
 // ═══════════════════════════════════════════════════
@@ -179,6 +160,46 @@ function Step1({
     }));
   };
 
+  const toggleBudgetType = (type: BudgetType) => {
+    if (type === "flexible") {
+      // Flexible is exclusive — deselect spend_cap/product_inventory
+      update("budgetType", "flexible");
+      return;
+    }
+    setDraft((prev) => {
+      // If currently flexible, switch to this type
+      if (prev.budgetType === "flexible" || !prev.budgetType) {
+        return { ...prev, budgetType: type };
+      }
+      // If clicking the same type that's already selected alone, deselect → flexible
+      if (prev.budgetType === type) {
+        return { ...prev, budgetType: "flexible" };
+      }
+      // If one of spend_cap/product_inventory is selected and clicking the other,
+      // combine them — use "spend_cap" as the budgetType and keep inventory fields
+      if (
+        (prev.budgetType === "spend_cap" && type === "product_inventory") ||
+        (prev.budgetType === "product_inventory" && type === "spend_cap")
+      ) {
+        return { ...prev, budgetType: "spend_cap_and_inventory" as BudgetType };
+      }
+      // If combined and unchecking one
+      if ((prev.budgetType as string) === "spend_cap_and_inventory") {
+        if (type === "spend_cap") return { ...prev, budgetType: "product_inventory" };
+        if (type === "product_inventory") return { ...prev, budgetType: "spend_cap" };
+      }
+      return { ...prev, budgetType: type };
+    });
+  };
+
+  const isBudgetTypeActive = (type: BudgetType): boolean => {
+    if (type === "flexible") return draft.budgetType === "flexible";
+    if ((draft.budgetType as string) === "spend_cap_and_inventory") {
+      return type === "spend_cap" || type === "product_inventory";
+    }
+    return draft.budgetType === type;
+  };
+
   const goalOptions: { value: CampaignGoal; label: string }[] = [
     { value: "awareness", label: "Brand Awareness" },
     { value: "sales", label: "Drive Sales / Traffic" },
@@ -218,7 +239,7 @@ function Step1({
               mode: "targeted" as CampaignMode,
               icon: Target,
               title: "Targeted Campaign",
-              desc: "Hand-pick specific creators or invite from your network. More control, more personal.",
+              desc: "Hand-pick specific creators for your campaign. More control, more personal.",
               best: "Best for: product launches, specific aesthetics, ongoing relationships",
             },
             {
@@ -359,97 +380,128 @@ function Step1({
               Budget & Compensation
             </h3>
 
-            {/* Budget Anchoring */}
+            {/* Budget Anchoring — checkboxes so you can select multiple */}
             <div className="space-y-3">
               <Label className="text-sm font-medium text-[var(--neutral-700)]">
-                How would you like to set your campaign budget?
+                How would you like to set your campaign budget? Select all that apply.
               </Label>
               <div className="space-y-3">
-                {([
-                  {
-                    value: "spend_cap" as BudgetType,
-                    label: "Total spend cap",
-                    desc: "I have a fixed dollar amount to invest in this campaign.",
-                  },
-                  {
-                    value: "product_inventory" as BudgetType,
-                    label: "Product inventory",
-                    desc: "I have a set number of products to gift.",
-                  },
-                  {
-                    value: "flexible" as BudgetType,
-                    label: "I'll decide as I go",
-                    desc: "I want flexibility to set compensation per creator.",
-                  },
-                ]).map((opt) => (
-                  <Card
-                    key={opt.value}
-                    className={`cursor-pointer border transition-all ${
-                      draft.budgetType === opt.value
-                        ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
-                        : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
-                    }`}
-                    onClick={() => update("budgetType", opt.value)}
-                  >
-                    <CardContent className="flex items-start gap-3 p-4">
-                      <div
-                        className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                          draft.budgetType === opt.value
-                            ? "border-[var(--brand-700)] bg-[var(--brand-700)]"
-                            : "border-[var(--neutral-300)]"
-                        }`}
-                      >
-                        {draft.budgetType === opt.value && (
-                          <div className="h-2 w-2 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[var(--neutral-800)]">
-                          {opt.label}
-                        </p>
-                        <p className="text-xs text-[var(--neutral-500)]">{opt.desc}</p>
+                {/* Total spend cap */}
+                <Card
+                  className={`cursor-pointer border transition-all ${
+                    isBudgetTypeActive("spend_cap")
+                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
+                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
+                  }`}
+                  onClick={() => toggleBudgetType("spend_cap")}
+                >
+                  <CardContent className="flex items-start gap-3 p-4">
+                    <Checkbox
+                      checked={isBudgetTypeActive("spend_cap")}
+                      onCheckedChange={() => toggleBudgetType("spend_cap")}
+                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--neutral-800)]">
+                        Total spend cap
+                      </p>
+                      <p className="text-xs text-[var(--neutral-500)]">
+                        I have a fixed dollar amount to invest in this campaign.
+                      </p>
+                      {isBudgetTypeActive("spend_cap") && (
+                        <div className="mt-3">
+                          <Input
+                            type="number"
+                            placeholder="e.g., 5000"
+                            className="w-48 border-[var(--neutral-200)]"
+                            value={draft.budgetCapAmount || ""}
+                            onChange={(e) =>
+                              update("budgetCapAmount", Number(e.target.value))
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                        {draft.budgetType === "spend_cap" && opt.value === "spend_cap" && (
-                          <div className="mt-3">
-                            <Input
-                              type="number"
-                              placeholder="e.g., 5000"
-                              className="w-48 border-[var(--neutral-200)]"
-                              value={draft.budgetCapAmount || ""}
-                              onChange={(e) =>
-                                update("budgetCapAmount", Number(e.target.value))
-                              }
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        )}
-                        {draft.budgetType === "product_inventory" &&
-                          opt.value === "product_inventory" && (
-                            <div className="mt-3 flex items-center gap-3">
-                              <Input
-                                type="number"
-                                placeholder="Units"
-                                className="w-24 border-[var(--neutral-200)]"
-                                value={draft.budgetInventoryCount || ""}
-                                onChange={(e) =>
-                                  update("budgetInventoryCount", Number(e.target.value))
-                                }
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <span className="text-sm text-[var(--neutral-500)]">units of</span>
-                              <Input
-                                placeholder="Product name"
-                                className="flex-1 border-[var(--neutral-200)]"
-                                value={draft.budgetProductName || ""}
-                                onChange={(e) => update("budgetProductName", e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {/* Product inventory */}
+                <Card
+                  className={`cursor-pointer border transition-all ${
+                    isBudgetTypeActive("product_inventory")
+                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
+                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
+                  }`}
+                  onClick={() => toggleBudgetType("product_inventory")}
+                >
+                  <CardContent className="flex items-start gap-3 p-4">
+                    <Checkbox
+                      checked={isBudgetTypeActive("product_inventory")}
+                      onCheckedChange={() => toggleBudgetType("product_inventory")}
+                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--neutral-800)]">
+                        Product inventory
+                      </p>
+                      <p className="text-xs text-[var(--neutral-500)]">
+                        I have a set number of products to gift.
+                      </p>
+                      {isBudgetTypeActive("product_inventory") && (
+                        <div className="mt-3 flex items-center gap-3">
+                          <Input
+                            type="number"
+                            placeholder="Units"
+                            className="w-24 border-[var(--neutral-200)]"
+                            value={draft.budgetInventoryCount || ""}
+                            onChange={(e) =>
+                              update("budgetInventoryCount", Number(e.target.value))
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-sm text-[var(--neutral-500)]">units of</span>
+                          <Input
+                            placeholder="Product name"
+                            className="flex-1 border-[var(--neutral-200)]"
+                            value={draft.budgetProductName || ""}
+                            onChange={(e) => update("budgetProductName", e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Flexible */}
+                <Card
+                  className={`cursor-pointer border transition-all ${
+                    draft.budgetType === "flexible"
+                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
+                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
+                  }`}
+                  onClick={() => toggleBudgetType("flexible")}
+                >
+                  <CardContent className="flex items-start gap-3 p-4">
+                    <Checkbox
+                      checked={draft.budgetType === "flexible"}
+                      onCheckedChange={() => toggleBudgetType("flexible")}
+                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--neutral-800)]">
+                        I'll decide as I go
+                      </p>
+                      <p className="text-xs text-[var(--neutral-500)]">
+                        I want flexibility to set compensation per creator.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
@@ -592,7 +644,7 @@ function Step1({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 2: Campaign Brief + Creator Selection
+// STEP 2: Campaign Brief (no creator selection, no budget bar)
 // ═══════════════════════════════════════════════════
 function Step2({
   draft,
@@ -618,8 +670,6 @@ function Step2({
 
   return (
     <div className="space-y-8">
-      <BudgetBar draft={draft} />
-
       <div className="space-y-5">
         <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Brief</h3>
 
@@ -670,7 +720,7 @@ function Step2({
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Content Requirements — "well_lit" removed, hashtag input added */}
+      {/* Content Requirements */}
       <div className="space-y-4">
         <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Requirements</h3>
         <div className="space-y-2.5">
@@ -828,49 +878,81 @@ function Step2({
         </div>
       </div>
 
-      {/* Creator Selection — moved here after brief */}
+      {/* Creator Preferences — type + count (no specific creator selection) */}
       <Separator className="bg-[var(--neutral-200)]" />
 
       <div className="space-y-5">
         <h3 className="text-base font-bold text-[var(--neutral-800)]">
-          Select Creators
+          Creator Preferences
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="cursor-pointer border-[var(--neutral-200)] hover:border-[var(--brand-400)] transition-all">
-            <CardContent className="flex flex-col items-center gap-2 p-6 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-100)]">
-                <Target className="size-5 text-[var(--brand-700)]" />
-              </div>
-              <p className="text-sm font-medium text-[var(--neutral-800)]">
-                Browse Benable Creators
-              </p>
+        <p className="text-sm text-[var(--neutral-500)]">
+          Tell us what type of creators you're looking for and how many. We'll curate a list of matching creators for you to choose from.
+        </p>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-[var(--neutral-800)]">
+              Creator Type
+            </Label>
+            <Select
+              value={draft.creatorType || ""}
+              onValueChange={(v) => update("creatorType", v as CreatorType)}
+            >
+              <SelectTrigger className="border-[var(--neutral-200)]">
+                <SelectValue placeholder="Select creator tier..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CREATOR_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex flex-col">
+                      <span>{opt.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {draft.creatorType && (
               <p className="text-xs text-[var(--neutral-500)]">
-                Search and select from our creator network
+                {CREATOR_TYPE_OPTIONS.find((o) => o.value === draft.creatorType)?.desc}
               </p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer border-[var(--neutral-200)] hover:border-[var(--brand-400)] transition-all">
-            <CardContent className="flex flex-col items-center gap-2 p-6 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--neutral-100)]">
-                <Upload className="size-5 text-[var(--neutral-600)]" />
-              </div>
-              <p className="text-sm font-medium text-[var(--neutral-800)]">
-                I have specific creators
-              </p>
-              <p className="text-xs text-[var(--neutral-500)]">
-                Enter handles or names directly
-              </p>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-[var(--neutral-800)]">
+              How many creators?
+            </Label>
+            <Input
+              type="number"
+              placeholder="e.g., 10"
+              className="border-[var(--neutral-200)]"
+              value={draft.creatorCount || ""}
+              onChange={(e) => update("creatorCount", Number(e.target.value))}
+            />
+            <p className="text-xs text-[var(--neutral-500)]">
+              Approximate number — we'll recommend the best matches.
+            </p>
+          </div>
         </div>
+
         <div className="space-y-2">
           <Label className="text-sm font-medium text-[var(--neutral-800)]">
-            Creator handles or names
+            Creator categories (optional)
           </Label>
           <Input
-            placeholder="@handle1, @handle2, ..."
+            placeholder="e.g., Beauty, Skincare, Lifestyle, Wellness"
             className="border-[var(--neutral-200)]"
+            value={draft.creatorCategories.join(", ")}
+            onChange={(e) =>
+              update(
+                "creatorCategories",
+                e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+              )
+            }
           />
+          <p className="text-xs text-[var(--neutral-500)]">
+            Comma-separated list of niches or content categories.
+          </p>
         </div>
       </div>
     </div>
@@ -910,11 +992,25 @@ function Step3({
     benable_post: "Benable Post",
   };
 
+  const creatorTypeLabels: Record<CreatorType, string> = {
+    nano: "Nano (1K–10K)",
+    micro: "Micro (10K–50K)",
+    mid: "Mid-tier (50K–200K)",
+    macro: "Macro (200K+)",
+    any: "Any / Open to all",
+  };
+
   const enabledComps = draft.compensationTypes.filter((c) => c.enabled);
 
   return (
     <div className="space-y-6">
-      <BudgetBar draft={draft} />
+      {/* Campaign title — prominent */}
+      <div className="text-center py-2">
+        <p className="text-sm text-[var(--neutral-500)] mb-1">Campaign</p>
+        <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
+          {draft.title || "Untitled Campaign"}
+        </h2>
+      </div>
 
       <div className="rounded-xl border border-[var(--neutral-200)] bg-white shadow-light-top">
         {/* Campaign Setup section */}
@@ -935,12 +1031,6 @@ function Step3({
               <p className="text-[var(--neutral-500)]">Mode</p>
               <p className="font-medium text-[var(--neutral-800)] capitalize">
                 {draft.mode === "debut" ? "Debut Collabs" : `${draft.mode} Campaign`}
-              </p>
-            </div>
-            <div>
-              <p className="text-[var(--neutral-500)]">Title</p>
-              <p className="font-medium text-[var(--neutral-800)]">
-                {draft.title || "—"}
               </p>
             </div>
             <div>
@@ -966,11 +1056,15 @@ function Step3({
             <div>
               <p className="text-[var(--neutral-500)]">Budget</p>
               <p className="font-medium text-[var(--neutral-800)]">
-                {draft.budgetType === "spend_cap"
-                  ? `$${(draft.budgetCapAmount || 0).toLocaleString()} total spend cap`
-                  : draft.budgetType === "product_inventory"
-                    ? `${draft.budgetInventoryCount || 0} units (${draft.budgetProductName || "product"})`
-                    : "Flexible"}
+                {(() => {
+                  const parts: string[] = [];
+                  if (isBudgetActive("spend_cap", draft.budgetType))
+                    parts.push(`$${(draft.budgetCapAmount || 0).toLocaleString()} total spend`);
+                  if (isBudgetActive("product_inventory", draft.budgetType))
+                    parts.push(`${draft.budgetInventoryCount || 0} units (${draft.budgetProductName || "product"})`);
+                  if (draft.budgetType === "flexible") parts.push("Flexible");
+                  return parts.length > 0 ? parts.join(" + ") : "—";
+                })()}
               </p>
             </div>
           </div>
@@ -1052,9 +1146,56 @@ function Step3({
             </div>
           </div>
         </div>
+
+        <Separator className="bg-[var(--neutral-200)]" />
+
+        {/* Creator Preferences section */}
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Preferences</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-[var(--brand-700)]"
+              onClick={() => onBack(2)}
+            >
+              Edit
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-[var(--neutral-500)]">Creator Type</p>
+              <p className="font-medium text-[var(--neutral-800)]">
+                {draft.creatorType ? creatorTypeLabels[draft.creatorType] : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[var(--neutral-500)]">Number of Creators</p>
+              <p className="font-medium text-[var(--neutral-800)]">
+                {draft.creatorCount || "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[var(--neutral-500)]">Categories</p>
+              <p className="font-medium text-[var(--neutral-800)]">
+                {draft.creatorCategories.length > 0
+                  ? draft.creatorCategories.join(", ")
+                  : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+// Helper for budget type checks in review
+function isBudgetActive(type: string, budgetType?: string): boolean {
+  if (!budgetType) return false;
+  if (budgetType === "spend_cap_and_inventory")
+    return type === "spend_cap" || type === "product_inventory";
+  return budgetType === type;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1078,14 +1219,14 @@ export default function CreateCampaign() {
   if (launched) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--green-100)]">
-          <Rocket className="size-8 text-[var(--green-500)]" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-100)]">
+          <Search className="size-8 text-[var(--brand-700)]" />
         </div>
         <h2 className="mt-6 text-2xl font-bold text-[var(--neutral-800)]">
-          Your campaign is live!
+          We're finding your creators!
         </h2>
         <p className="mt-2 max-w-md text-center text-sm text-[var(--neutral-500)]">
-          We're matching you with creators and will notify you when applications arrive. Redirecting to your campaign...
+          We're matching your campaign with the best creators. You'll receive a curated list shortly. Redirecting to your campaign...
         </p>
       </div>
     );
@@ -1136,7 +1277,7 @@ export default function CreateCampaign() {
             className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
             onClick={handleLaunch}
           >
-            <Rocket className="size-4" /> Launch Campaign
+            <Search className="size-4" /> Find the Right Creators
           </Button>
         )}
       </div>
