@@ -30,13 +30,16 @@ import {
   Lock,
   FileText,
   Search,
+  Megaphone,
+  ShoppingCart,
+  Rocket,
+  Camera,
 } from "lucide-react";
 import {
   emptyCampaignDraft,
   type CampaignDraft,
   type CampaignMode,
   type CampaignGoal,
-  type BudgetType,
   type CompensationType,
   type ContentRequirement,
   type ContentFormat,
@@ -106,6 +109,30 @@ const CREATOR_TYPE_OPTIONS: { value: CreatorType; label: string; desc: string }[
 // ═══════════════════════════════════════════════════
 // STEP 1: Campaign Setup (Mode + Basics + Budget & Compensation combined)
 // ═══════════════════════════════════════════════════
+// ─── Compensation pill config ───
+const COMPENSATION_PILLS: {
+  type: CompensationType;
+  label: string;
+  icon: React.ElementType;
+  color: string;      // icon/text accent
+  bgColor: string;    // pill fill when selected
+  borderColor: string;
+}[] = [
+  { type: "gifted", label: "Gifted Product", icon: Gift, color: "var(--red-700)", bgColor: "var(--red-100)", borderColor: "var(--red-300)" },
+  { type: "gift_card", label: "Gift Card", icon: CreditCard, color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)" },
+  { type: "discount", label: "Discount Code", icon: Tag, color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)" },
+  { type: "paid", label: "Paid Fee", icon: DollarSign, color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)" },
+  { type: "commission_boost", label: "Commission Boost", icon: TrendingUp, color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)" },
+];
+
+// ─── Goal chip config ───
+const GOAL_CHIPS: { value: CampaignGoal; label: string; icon: React.ElementType }[] = [
+  { value: "awareness", label: "Brand Awareness", icon: Megaphone },
+  { value: "sales", label: "Drive Sales / Traffic", icon: ShoppingCart },
+  { value: "product_launch", label: "Product Launch", icon: Rocket },
+  { value: "ugc", label: "Content / UGC", icon: Camera },
+];
+
 function Step1({
   draft,
   setDraft,
@@ -144,7 +171,6 @@ function Step1({
       contentFormats: checked
         ? [...prev.contentFormats, format]
         : prev.contentFormats.filter((f) => f !== format),
-      // Auto-derive platforms from content formats
       platforms: (() => {
         const newFormats = checked
           ? [...prev.contentFormats, format]
@@ -159,71 +185,20 @@ function Step1({
     }));
   };
 
-  const toggleBudgetType = (type: BudgetType) => {
-    if (type === "flexible") {
-      // Flexible is exclusive — deselect spend_cap/product_inventory
-      update("budgetType", "flexible");
-      return;
-    }
-    setDraft((prev) => {
-      // If currently flexible, switch to this type
-      if (prev.budgetType === "flexible" || !prev.budgetType) {
-        return { ...prev, budgetType: type };
-      }
-      // If clicking the same type that's already selected alone, deselect → flexible
-      if (prev.budgetType === type) {
-        return { ...prev, budgetType: "flexible" };
-      }
-      // If one of spend_cap/product_inventory is selected and clicking the other,
-      // combine them — use "spend_cap" as the budgetType and keep inventory fields
-      if (
-        (prev.budgetType === "spend_cap" && type === "product_inventory") ||
-        (prev.budgetType === "product_inventory" && type === "spend_cap")
-      ) {
-        return { ...prev, budgetType: "spend_cap_and_inventory" as BudgetType };
-      }
-      // If combined and unchecking one
-      if ((prev.budgetType as string) === "spend_cap_and_inventory") {
-        if (type === "spend_cap") return { ...prev, budgetType: "product_inventory" };
-        if (type === "product_inventory") return { ...prev, budgetType: "spend_cap" };
-      }
-      return { ...prev, budgetType: type };
-    });
-  };
-
-  const isBudgetTypeActive = (type: BudgetType): boolean => {
-    if (type === "flexible") return draft.budgetType === "flexible";
-    if ((draft.budgetType as string) === "spend_cap_and_inventory") {
-      return type === "spend_cap" || type === "product_inventory";
-    }
-    return draft.budgetType === type;
-  };
-
-  const goalOptions: { value: CampaignGoal; label: string }[] = [
-    { value: "awareness", label: "Brand Awareness" },
-    { value: "sales", label: "Drive Sales / Traffic" },
-    { value: "product_launch", label: "Product Launch" },
-    { value: "ugc", label: "Content / UGC Generation" },
-  ];
-
-  const compensationIcons: Record<CompensationType, React.ReactNode> = {
-    gifted: <Gift className="size-4" />,
-    gift_card: <CreditCard className="size-4" />,
-    discount: <Tag className="size-4" />,
-    paid: <DollarSign className="size-4" />,
-    commission_boost: <TrendingUp className="size-4" />,
-  };
-
-  const compensationLabels: Record<CompensationType, string> = {
-    gifted: "Gifted Product",
-    gift_card: "Gift Card",
-    discount: "Discount Code",
-    paid: "Paid Fee",
-    commission_boost: "Commission Boost",
+  const toggleGoal = (goal: CampaignGoal) => {
+    setDraft((prev) => ({
+      ...prev,
+      goals: prev.goals.includes(goal)
+        ? prev.goals.filter((g) => g !== goal)
+        : [...prev.goals, goal],
+    }));
   };
 
   // Deactivated modes
   const deactivatedModes: CampaignMode[] = ["open", "debut"];
+
+  // Get the active compensation configs for expanded detail rendering
+  const activeComps = draft.compensationTypes.filter((c) => c.enabled);
 
   return (
     <div className="space-y-8">
@@ -318,25 +293,32 @@ function Step1({
             </div>
 
             <div className="grid grid-cols-2 gap-6">
+              {/* Campaign Goal — chip multi-select */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-[var(--neutral-800)]">
-                  Campaign Goal <span className="text-[var(--red-500)]">*</span>
+                  Campaign Goal <span className="text-xs font-normal text-[var(--neutral-500)]">(select all that apply)</span>
                 </Label>
-                <Select
-                  value={draft.goal || ""}
-                  onValueChange={(v) => update("goal", v as CampaignGoal)}
-                >
-                  <SelectTrigger className="border-[var(--neutral-200)]">
-                    <SelectValue placeholder="Select a goal..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {goalOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {GOAL_CHIPS.map((g) => {
+                    const selected = draft.goals.includes(g.value);
+                    return (
+                      <button
+                        key={g.value}
+                        type="button"
+                        onClick={() => toggleGoal(g.value)}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${
+                          selected
+                            ? "bg-[var(--brand-700)] text-white shadow-sm"
+                            : "border border-[var(--neutral-300)] bg-white text-[var(--neutral-600)] hover:border-[var(--brand-400)] hover:text-[var(--brand-700)]"
+                        }`}
+                      >
+                        <g.icon className="size-3.5" />
+                        {g.label}
+                        {selected && <Check className="size-3" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -371,270 +353,142 @@ function Step1({
             </div>
           </div>
 
-          {/* Budget & Compensation (combined section) */}
+          {/* Compensation — pill toggle row */}
           <Separator className="bg-[var(--neutral-200)]" />
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <h3 className="text-base font-bold text-[var(--neutral-800)]">
-              Budget & Compensation
+              Compensation
             </h3>
+            <p className="text-sm text-[var(--neutral-500)]">
+              What will you offer creators? Select all that apply.
+            </p>
 
-            {/* Budget Anchoring — checkboxes so you can select multiple */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-[var(--neutral-700)]">
-                How would you like to set your campaign budget? Select all that apply.
-              </Label>
-              <div className="space-y-3">
-                {/* Total spend cap */}
-                <Card
-                  className={`cursor-pointer border transition-all ${
-                    isBudgetTypeActive("spend_cap")
-                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
-                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
-                  }`}
-                  onClick={() => toggleBudgetType("spend_cap")}
-                >
-                  <CardContent className="flex items-start gap-3 p-4">
-                    <Checkbox
-                      checked={isBudgetTypeActive("spend_cap")}
-                      onCheckedChange={() => toggleBudgetType("spend_cap")}
-                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--neutral-800)]">
-                        Total spend cap
-                      </p>
-                      <p className="text-xs text-[var(--neutral-500)]">
-                        I have a fixed dollar amount to invest in this campaign.
-                      </p>
-                      {isBudgetTypeActive("spend_cap") && (
-                        <div className="mt-3">
-                          <Input
-                            type="number"
-                            placeholder="e.g., 5000"
-                            className="w-48 border-[var(--neutral-200)]"
-                            value={draft.budgetCapAmount || ""}
-                            onChange={(e) =>
-                              update("budgetCapAmount", Number(e.target.value))
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Product inventory */}
-                <Card
-                  className={`cursor-pointer border transition-all ${
-                    isBudgetTypeActive("product_inventory")
-                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
-                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
-                  }`}
-                  onClick={() => toggleBudgetType("product_inventory")}
-                >
-                  <CardContent className="flex items-start gap-3 p-4">
-                    <Checkbox
-                      checked={isBudgetTypeActive("product_inventory")}
-                      onCheckedChange={() => toggleBudgetType("product_inventory")}
-                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--neutral-800)]">
-                        Product inventory
-                      </p>
-                      <p className="text-xs text-[var(--neutral-500)]">
-                        I have a set number of products to gift.
-                      </p>
-                      {isBudgetTypeActive("product_inventory") && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <Input
-                            type="number"
-                            placeholder="Units"
-                            className="w-24 border-[var(--neutral-200)]"
-                            value={draft.budgetInventoryCount || ""}
-                            onChange={(e) =>
-                              update("budgetInventoryCount", Number(e.target.value))
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <span className="text-sm text-[var(--neutral-500)]">units of</span>
-                          <Input
-                            placeholder="Product name"
-                            className="flex-1 border-[var(--neutral-200)]"
-                            value={draft.budgetProductName || ""}
-                            onChange={(e) => update("budgetProductName", e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Flexible */}
-                <Card
-                  className={`cursor-pointer border transition-all ${
-                    draft.budgetType === "flexible"
-                      ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
-                      : "border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
-                  }`}
-                  onClick={() => toggleBudgetType("flexible")}
-                >
-                  <CardContent className="flex items-start gap-3 p-4">
-                    <Checkbox
-                      checked={draft.budgetType === "flexible"}
-                      onCheckedChange={() => toggleBudgetType("flexible")}
-                      className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--neutral-800)]">
-                        I'll decide as I go
-                      </p>
-                      <p className="text-xs text-[var(--neutral-500)]">
-                        I want flexibility to set compensation per creator.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Compensation Types */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-[var(--neutral-700)]">
-                What compensation will you offer creators? Select all that apply.
-              </Label>
-              <div className="space-y-3">
-                {draft.compensationTypes.map((comp) => (
-                  <Card
-                    key={comp.type}
-                    className={`border transition-all ${
-                      comp.enabled
-                        ? "border-[var(--brand-700)] bg-[var(--brand-0)]"
-                        : "border-[var(--neutral-200)]"
-                    }`}
+            {/* Pill row */}
+            <div className="flex flex-wrap gap-2.5">
+              {COMPENSATION_PILLS.map((pill) => {
+                const comp = draft.compensationTypes.find((c) => c.type === pill.type);
+                const active = comp?.enabled ?? false;
+                return (
+                  <button
+                    key={pill.type}
+                    type="button"
+                    onClick={() => toggleCompensation(pill.type, !active)}
+                    className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: active ? pill.bgColor : "white",
+                      border: `1.5px solid ${active ? pill.borderColor : "var(--neutral-300)"}`,
+                      color: active ? pill.color : "var(--neutral-600)",
+                    }}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={comp.enabled}
-                          onCheckedChange={(checked) =>
-                            toggleCompensation(comp.type, !!checked)
-                          }
-                          className="mt-0.5 data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[var(--brand-700)]">
-                              {compensationIcons[comp.type]}
-                            </span>
-                            <span className="text-sm font-medium text-[var(--neutral-800)]">
-                              {compensationLabels[comp.type]}
-                            </span>
-                          </div>
-
-                          {comp.enabled && comp.type === "gifted" && (
-                            <div className="mt-3 grid grid-cols-3 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Product name</Label>
-                                <Input
-                                  placeholder="e.g., Melted Balm"
-                                  className="h-8 text-sm border-[var(--neutral-200)]"
-                                  value={comp.productName || ""}
-                                  onChange={(e) => updateCompensation(comp.type, "productName", e.target.value)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Product URL</Label>
-                                <Input
-                                  placeholder="https://..."
-                                  className="h-8 text-sm border-[var(--neutral-200)]"
-                                  value={comp.productUrl || ""}
-                                  onChange={(e) => updateCompensation(comp.type, "productUrl", e.target.value)}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Est. value/unit</Label>
-                                <Input
-                                  type="number"
-                                  placeholder="$35"
-                                  className="h-8 text-sm border-[var(--neutral-200)]"
-                                  value={comp.estValuePerUnit || ""}
-                                  onChange={(e) => updateCompensation(comp.type, "estValuePerUnit", Number(e.target.value))}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {comp.enabled && comp.type === "gift_card" && (
-                            <div className="mt-3 grid grid-cols-3 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Gift card value</Label>
-                                <Input type="number" placeholder="$50" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.giftCardValue || ""} onChange={(e) => updateCompensation(comp.type, "giftCardValue", Number(e.target.value))} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Brand/Store</Label>
-                                <Input placeholder="e.g., Ulta Beauty" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.giftCardBrand || ""} onChange={(e) => updateCompensation(comp.type, "giftCardBrand", e.target.value)} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Delivery</Label>
-                                <Select value={comp.giftCardDelivery || "brand_provides"} onValueChange={(v) => updateCompensation(comp.type, "giftCardDelivery", v)}>
-                                  <SelectTrigger className="h-8 text-sm border-[var(--neutral-200)]"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="brand_provides">Brand provides code</SelectItem>
-                                    <SelectItem value="benable_sends">Benable sends eGift</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          )}
-
-                          {comp.enabled && comp.type === "discount" && (
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Discount code</Label>
-                                <Input placeholder="e.g., SUMMER20" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.discountCode || ""} onChange={(e) => updateCompensation(comp.type, "discountCode", e.target.value)} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Discount amount</Label>
-                                <Input placeholder="20% or $10" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.discountAmount || ""} onChange={(e) => updateCompensation(comp.type, "discountAmount", Number(e.target.value))} />
-                              </div>
-                            </div>
-                          )}
-
-                          {comp.enabled && comp.type === "paid" && (
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Min fee/creator</Label>
-                                <Input type="number" placeholder="$100" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.feeMin || ""} onChange={(e) => updateCompensation(comp.type, "feeMin", Number(e.target.value))} />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Max fee/creator</Label>
-                                <Input type="number" placeholder="$300" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.feeMax || ""} onChange={(e) => updateCompensation(comp.type, "feeMax", Number(e.target.value))} />
-                              </div>
-                            </div>
-                          )}
-
-                          {comp.enabled && comp.type === "commission_boost" && (
-                            <div className="mt-3 w-48">
-                              <div className="space-y-1">
-                                <Label className="text-xs text-[var(--neutral-500)]">Boosted commission rate</Label>
-                                <Input type="number" placeholder="15%" className="h-8 text-sm border-[var(--neutral-200)]" value={comp.commissionRate || ""} onChange={(e) => updateCompensation(comp.type, "commissionRate", Number(e.target.value))} />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    <pill.icon className="size-4" />
+                    {pill.label}
+                    {active && <Check className="size-3.5" />}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Expanded detail inputs for selected compensation types */}
+            {activeComps.length > 0 && (
+              <div className="space-y-4">
+                {activeComps.map((comp) => {
+                  const pill = COMPENSATION_PILLS.find((p) => p.type === comp.type)!;
+                  return (
+                    <div
+                      key={comp.type}
+                      className="rounded-xl p-4"
+                      style={{
+                        backgroundColor: pill.bgColor,
+                        border: `1px solid ${pill.borderColor}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <pill.icon className="size-4" style={{ color: pill.color }} />
+                        <span className="text-sm font-semibold" style={{ color: pill.color }}>
+                          {pill.label}
+                        </span>
+                      </div>
+
+                      {comp.type === "gifted" && (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Product name</Label>
+                            <Input placeholder="e.g., Melted Balm" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.productName || ""} onChange={(e) => updateCompensation(comp.type, "productName", e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Product URL</Label>
+                            <Input placeholder="https://..." className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.productUrl || ""} onChange={(e) => updateCompensation(comp.type, "productUrl", e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Est. value/unit</Label>
+                            <Input type="number" placeholder="$35" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.estValuePerUnit || ""} onChange={(e) => updateCompensation(comp.type, "estValuePerUnit", Number(e.target.value))} />
+                          </div>
+                        </div>
+                      )}
+
+                      {comp.type === "gift_card" && (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Gift card value</Label>
+                            <Input type="number" placeholder="$50" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.giftCardValue || ""} onChange={(e) => updateCompensation(comp.type, "giftCardValue", Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Brand/Store</Label>
+                            <Input placeholder="e.g., Ulta Beauty" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.giftCardBrand || ""} onChange={(e) => updateCompensation(comp.type, "giftCardBrand", e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Delivery</Label>
+                            <Select value={comp.giftCardDelivery || "brand_provides"} onValueChange={(v) => updateCompensation(comp.type, "giftCardDelivery", v)}>
+                              <SelectTrigger className="h-8 text-sm bg-white border-[var(--neutral-200)]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="brand_provides">Brand provides code</SelectItem>
+                                <SelectItem value="benable_sends">Benable sends eGift</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+
+                      {comp.type === "discount" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Discount code</Label>
+                            <Input placeholder="e.g., SUMMER20" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.discountCode || ""} onChange={(e) => updateCompensation(comp.type, "discountCode", e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Discount amount</Label>
+                            <Input placeholder="20% or $10" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.discountAmount || ""} onChange={(e) => updateCompensation(comp.type, "discountAmount", Number(e.target.value))} />
+                          </div>
+                        </div>
+                      )}
+
+                      {comp.type === "paid" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Min fee/creator</Label>
+                            <Input type="number" placeholder="$100" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.feeMin || ""} onChange={(e) => updateCompensation(comp.type, "feeMin", Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Max fee/creator</Label>
+                            <Input type="number" placeholder="$300" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.feeMax || ""} onChange={(e) => updateCompensation(comp.type, "feeMax", Number(e.target.value))} />
+                          </div>
+                        </div>
+                      )}
+
+                      {comp.type === "commission_boost" && (
+                        <div className="w-48">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-[var(--neutral-600)]">Boosted commission rate</Label>
+                            <Input type="number" placeholder="15%" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.commissionRate || ""} onChange={(e) => updateCompensation(comp.type, "commissionRate", Number(e.target.value))} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1043,9 +897,11 @@ function Step3({
               </p>
             </div>
             <div>
-              <p className="text-[var(--neutral-500)]">Goal</p>
+              <p className="text-[var(--neutral-500)]">Goal(s)</p>
               <p className="font-medium text-[var(--neutral-800)]">
-                {draft.goal ? goalLabels[draft.goal] : "—"}
+                {draft.goals.length > 0
+                  ? draft.goals.map((g) => goalLabels[g]).join(", ")
+                  : "—"}
               </p>
             </div>
             <div>

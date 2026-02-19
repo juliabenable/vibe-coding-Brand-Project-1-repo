@@ -43,7 +43,7 @@ export interface CampaignDraft {
   // Step 1
   mode?: CampaignMode;
   title: string;
-  goal?: CampaignGoal;
+  goals: CampaignGoal[];
   platforms: Platform[];
   contentFormats: ContentFormat[];
   budgetType?: BudgetType;
@@ -82,7 +82,7 @@ export const defaultCompensationTypes: CompensationConfig[] = [
 export const emptyCampaignDraft: CampaignDraft = {
   mode: undefined,
   title: "",
-  goal: undefined,
+  goals: [],
   platforms: ["benable"],
   contentFormats: ["benable_post"],
   budgetType: undefined,
@@ -180,7 +180,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     id: "camp-001",
     mode: "open",
     title: "Melted Balm Spring Launch",
-    goal: "awareness",
+    goals: ["awareness"],
     platforms: ["benable", "instagram"],
     contentFormats: ["benable_post", "instagram_reel", "instagram_story"],
     budgetType: "product_inventory",
@@ -316,7 +316,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     id: "camp-002",
     mode: "targeted",
     title: "Rare Beauty Launch at Ulta Beauty",
-    goal: "product_launch",
+    goals: ["product_launch"],
     platforms: ["benable", "instagram", "tiktok"],
     contentFormats: ["benable_post", "instagram_reel", "instagram_post", "tiktok_video"],
     budgetType: "spend_cap",
