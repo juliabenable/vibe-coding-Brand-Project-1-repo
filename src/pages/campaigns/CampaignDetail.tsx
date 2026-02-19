@@ -686,9 +686,11 @@ export default function CampaignDetail() {
             <CardContent className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <div>
-                  <p className="text-[var(--neutral-500)] text-xs uppercase tracking-wider mb-1">Goal</p>
+                  <p className="text-[var(--neutral-500)] text-xs uppercase tracking-wider mb-1">Goal(s)</p>
                   <p className="font-medium text-[var(--neutral-800)]">
-                    {campaign.goal ? goalLabels[campaign.goal] : "—"}
+                    {campaign.goals && campaign.goals.length > 0
+                      ? campaign.goals.map((g) => goalLabels[g]).join(", ")
+                      : "—"}
                   </p>
                 </div>
                 <div>
