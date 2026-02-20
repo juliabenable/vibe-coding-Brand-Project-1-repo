@@ -22,6 +22,27 @@ export type ContentRequirement =
   | "use_hashtags"
   | "show_labels";
 
+// Creator Obligations (LTK-inspired pre-built templates)
+export interface CreatorObligation {
+  id: string;
+  label: string;
+  description: string;
+  platform: string;
+  emoji: string;
+  enabled: boolean;
+}
+
+export const DEFAULT_OBLIGATIONS: CreatorObligation[] = [
+  { id: "ig_story_content", label: "Post Instagram Story with campaign content", description: "Creator must post at least one Instagram Story featuring the product", platform: "Instagram", emoji: "📱", enabled: false },
+  { id: "tag_brand", label: "Tag brand in all posts", description: "Creator must tag the brand handle in every post and story", platform: "All", emoji: "🏷️", enabled: false },
+  { id: "use_hashtag", label: "Use campaign hashtag", description: "Creator must include the designated campaign hashtag", platform: "All", emoji: "#️⃣", enabled: false },
+  { id: "link_sticker", label: "Include link sticker to product", description: "Creator must add a link sticker pointing to the product page", platform: "Instagram", emoji: "🔗", enabled: false },
+  { id: "benable_post", label: "Create a Benable recommendation post", description: "Creator must publish a recommendation on their Benable profile", platform: "Benable", emoji: "⭐", enabled: false },
+  { id: "show_product", label: "Show product in use (not just unboxing)", description: "Creator must demonstrate the product being actively used", platform: "All", emoji: "✨", enabled: false },
+  { id: "mention_discount", label: "Mention discount code in caption", description: "Creator must include the discount code visibly in their caption", platform: "All", emoji: "💸", enabled: false },
+  { id: "tiktok_video", label: "Post TikTok video featuring product", description: "Creator must publish a TikTok video showcasing the product", platform: "TikTok", emoji: "🎬", enabled: false },
+];
+
 export interface CompensationConfig {
   type: CompensationType;
   enabled: boolean;
@@ -69,6 +90,11 @@ export interface CampaignDraft {
   ugcExclusivity?: boolean;
   ugcExclusivityDays?: number;
   contentReviewRequired: boolean;
+
+  // Creator Obligations & Niches (new)
+  creatorObligations: CreatorObligation[];
+  customObligations: string[];
+  contentNiches: string[];
 }
 
 export const defaultCompensationTypes: CompensationConfig[] = [
@@ -106,6 +132,9 @@ export const emptyCampaignDraft: CampaignDraft = {
   ugcExclusivity: false,
   ugcExclusivityDays: undefined,
   contentReviewRequired: false,
+  creatorObligations: [...DEFAULT_OBLIGATIONS],
+  customObligations: [],
+  contentNiches: [],
 };
 
 // Creator-Campaign Assignment types
@@ -204,6 +233,9 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     flightDateEnd: "2026-03-31",
     ugcRights: true,
     contentReviewRequired: false,
+    creatorObligations: [],
+    customObligations: [],
+    contentNiches: ["Beauty", "Skincare", "Wellness"],
     status: "active",
     budgetAllocated: 12,
     createdAt: "2026-02-10",
@@ -339,6 +371,9 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     flightDateEnd: "2026-04-15",
     ugcRights: true,
     contentReviewRequired: true,
+    creatorObligations: [],
+    customObligations: [],
+    contentNiches: ["Beauty", "Fashion"],
     status: "active",
     budgetAllocated: 3500,
     createdAt: "2026-02-08",
