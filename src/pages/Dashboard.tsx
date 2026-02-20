@@ -11,7 +11,6 @@ import {
   Megaphone,
   Eye,
   TrendingUp,
-  Search,
 } from "lucide-react";
 import { Campaign, CreatorAssignment, MOCK_CAMPAIGNS } from "@/store/campaign-store";
 
@@ -201,17 +200,6 @@ export default function Dashboard() {
                 Create Campaign
               </Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-xl border-[var(--brand-300)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
-            >
-              <Link to="/creators">
-                <Search className="size-4" />
-                Browse Creators
-              </Link>
-            </Button>
           </div>
         </div>
       </div>
@@ -274,7 +262,7 @@ export default function Dashboard() {
                 return (
                   <Link
                     key={campaign.id}
-                    to={`/campaigns/${campaign.id}`}
+                    to={`/campaigns/${campaign.id}/find-talent`}
                     className="block"
                   >
                     <Card className="border-[var(--neutral-200)] transition-all hover:border-[var(--brand-400)] hover:shadow-medium-top overflow-hidden">

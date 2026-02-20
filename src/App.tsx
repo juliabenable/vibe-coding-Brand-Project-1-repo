@@ -8,6 +8,7 @@ import CampaignFindTalent from "@/pages/campaigns/CampaignFindTalent";
 import Creators from "@/pages/Creators";
 import Messages from "@/pages/Messages";
 import BrandSettings from "@/pages/BrandSettings";
+import UpgradePlan from "@/pages/UpgradePlan";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/creators" element={<Creators />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/settings" element={<BrandSettings />} />
+          <Route path="/upgrade" element={<UpgradePlan />} />
         </Route>
       </Routes>
     </HashRouter>

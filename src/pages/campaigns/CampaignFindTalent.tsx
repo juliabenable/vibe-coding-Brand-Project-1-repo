@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ import {
   MessageSquare,
   Home,
   ChevronDown,
+  MoreVertical,
 } from "lucide-react";
 import { formatFollowers } from "@/lib/format";
 
@@ -280,72 +281,67 @@ const MOCK_DISCOVERABLE_CREATORS: DiscoverableCreator[] = [
 /*  AI MATCHING LOADING SCREEN                                        */
 /* ================================================================== */
 function AIMatchingScreen({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const [step, setStep] = useState(0);
-
-  const steps = [
-    "Analyzing your campaign brief...",
-    "Scanning creator profiles...",
-    "Evaluating audience overlap...",
-    "Ranking by engagement & fit...",
-    "Finalizing your matches!",
-  ];
-
-  useEffect(() => {
-    let p = 0;
-    let s = 0;
-    const interval = setInterval(() => {
-      p += 1;
-      setProgress(p);
-      if (p >= 20 && s === 0) { s = 1; setStep(1); }
-      if (p >= 40 && s <= 1) { s = 2; setStep(2); }
-      if (p >= 60 && s <= 2) { s = 3; setStep(3); }
-      if (p >= 85 && s <= 3) { s = 4; setStep(4); }
-      if (p >= 100) {
-        clearInterval(interval);
-        setTimeout(onComplete, 600);
-      }
-    }, 220);
-    return () => clearInterval(interval);
-  }, [onComplete]);
-
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="max-w-md w-full text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--brand-700)]">
-          <Brain className="size-10 text-white animate-pulse" />
+      <div className="max-w-lg w-full text-center">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-0)] border border-[var(--brand-200)] px-4 py-1.5 text-xs font-medium text-[var(--brand-700)] mb-6">
+          <Users className="size-3.5" />
+          HUMAN-VETTED PROCESS
         </div>
+
+        {/* Checkmark */}
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--green-100)]">
+          <CheckCircle2 className="size-10 text-[var(--green-500)]" />
+        </div>
+
         <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
-          Benable AI is finding your perfect creators
+          We're on it!
         </h2>
-        <p className="mt-2 text-sm text-[var(--neutral-500)]">
-          Our proprietary matching engine analyzes thousands of data points
+        <p className="mt-2 text-sm text-[var(--neutral-500)] max-w-md mx-auto">
+          Our team is hand-picking the best creators for your campaign.
+          We'll notify you as soon as your matches are ready.
         </p>
 
-        {/* Email notification */}
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--brand-0)] border border-[var(--brand-200)] px-4 py-2 text-xs text-[var(--brand-700)]">
-          <Bell className="size-3.5" />
-          We'll email you when your matches are ready
+        {/* What to expect card */}
+        <div className="mt-8 rounded-xl border border-[var(--neutral-200)] bg-white p-6 text-left">
+          <h3 className="text-sm font-bold text-[var(--neutral-800)] mb-4">What to expect</h3>
+          <div className="space-y-4">
+            {[
+              { icon: "🔍", title: "Manual Selection", desc: "Our talent team reviews creators who are the best fit for your brand" },
+              { icon: "📧", title: "Email Notification", desc: "You'll receive an email when your creator matches are ready" },
+              { icon: "🔔", title: "In-app Alert", desc: "A notification will appear in your dashboard when it's time to review" },
+            ].map((item) => (
+              <div key={item.title} className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--neutral-100)] text-base">
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[var(--neutral-800)]">{item.title}</p>
+                  <p className="text-xs text-[var(--neutral-500)]">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8">
-          <div className="h-2.5 w-full rounded-full bg-[var(--neutral-100)] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-[var(--brand-600)] transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-[var(--brand-700)]">
-            {steps[step]}
-          </p>
-        </div>
-        <div className="mt-6 flex flex-col gap-2">
-          {steps.map((s, i) => (
-            <div key={i} className={`flex items-center gap-2 text-xs ${i <= step ? "text-[var(--neutral-800)]" : "text-[var(--neutral-400)]"}`}>
-              {i < step ? <CheckCircle2 className="size-3.5 text-[var(--green-500)]" /> : i === step ? <div className="size-3.5 rounded-full border-2 border-[var(--brand-700)] border-t-transparent animate-spin" /> : <div className="size-3.5 rounded-full border border-[var(--neutral-300)]" />}
-              {s}
-            </div>
-          ))}
+        {/* Action buttons */}
+        <div className="mt-6 flex flex-col gap-3 items-center">
+          <Button
+            onClick={onComplete}
+            className="gap-2 rounded-xl bg-[var(--brand-700)] px-8 text-white hover:bg-[var(--brand-800)]"
+          >
+            View Creator Matches
+            <ArrowRight className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="gap-2 text-[var(--neutral-500)] hover:text-[var(--brand-700)]"
+            onClick={() => window.location.hash = "/"}
+          >
+            <ArrowLeft className="size-4" />
+            Return to Dashboard
+          </Button>
         </div>
       </div>
     </div>
@@ -483,7 +479,7 @@ function CreatorDetailDialog({
           </div>
 
           <Button
-            onClick={onToggleSelect}
+            onClick={() => { onToggleSelect(); if (!isSelected) onClose(); }}
             className={`w-full gap-2 ${
               isSelected
                 ? "bg-[var(--neutral-200)] text-[var(--neutral-700)] hover:bg-[var(--neutral-300)]"
@@ -518,6 +514,8 @@ function StepCreatorSelection({
   onViewDetail: (creator: DiscoverableCreator) => void;
   onNext: () => void;
 }) {
+  const sortedCreators = [...creators].sort((a, b) => b.matchScore - a.matchScore);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -532,7 +530,7 @@ function StepCreatorSelection({
             </h2>
           </div>
           <p className="text-sm text-[var(--neutral-500)]">
-            {creators.length} creators matched to your campaign — ranked by fit score
+            {sortedCreators.length} creators matched to your campaign — ranked by fit score
           </p>
         </div>
       </div>
@@ -541,7 +539,7 @@ function StepCreatorSelection({
       <div className="flex items-center justify-between rounded-xl border border-[var(--neutral-200)] bg-[var(--neutral-50)] px-4 h-12">
         <div className="flex items-center gap-3">
           <Checkbox
-            checked={selected.size === creators.length && creators.length > 0}
+            checked={selected.size === sortedCreators.length && sortedCreators.length > 0}
             onCheckedChange={(c) => c ? onSelectAll() : onDeselectAll()}
             className="data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
           />
@@ -561,7 +559,7 @@ function StepCreatorSelection({
 
       {/* Creator grid */}
       <div className="grid grid-cols-4 gap-4">
-        {creators.map((creator) => {
+        {sortedCreators.map((creator) => {
           const isSelected = selected.has(creator.id);
           return (
             <div
@@ -682,7 +680,7 @@ interface ManagedCreator {
 
 const INVITE_STATUS_CONFIG: Record<InviteStatus, { label: string; color: string; bg: string }> = {
   pending: { label: "Pending", color: "var(--neutral-600)", bg: "var(--neutral-100)" },
-  invited: { label: "Invited", color: "var(--blue-700)", bg: "var(--blue-100)" },
+  invited: { label: "Invited", color: "var(--brand-700)", bg: "var(--brand-100)" },
   accepted: { label: "Accepted", color: "var(--green-700)", bg: "var(--green-100)" },
   waiting_for_content: { label: "Waiting for Content", color: "var(--orange-700)", bg: "var(--orange-100)" },
   content_submitted: { label: "Submitted", color: "var(--brand-700)", bg: "var(--brand-100)" },
@@ -716,12 +714,14 @@ function StepCreatorManagement({
   const [kudosText, setKudosText] = useState("Thank you so much for the amazing content! We loved working with you.");
   const [editingDueDate, setEditingDueDate] = useState<string | null>(null);
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
-
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
   const defaultDueDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     return d.toISOString().split("T")[0];
   }, []);
+  const [approveConfirmId, setApproveConfirmId] = useState<string | null>(null);
+  const [approveConfirmDate, setApproveConfirmDate] = useState(defaultDueDate);
 
   /* ------- Actions ------- */
   const inviteAll = () => {
@@ -791,15 +791,16 @@ function StepCreatorManagement({
   };
   void _updateDueDate; // available for future use
 
-  const approveContent = (id: string) => {
+  const confirmApproveContent = (id: string, approvalDate: string) => {
     setManagedCreators((prev) =>
       prev.map((mc) =>
         mc.creator.id === id && mc.contentSubmission
-          ? { ...mc, inviteStatus: "awaiting_post", contentSubmission: { ...mc.contentSubmission, brandReviewStatus: "approved" } }
+          ? { ...mc, inviteStatus: "awaiting_post", contentSubmission: { ...mc.contentSubmission, brandReviewStatus: "approved" }, contentDueDate: approvalDate }
           : mc
       )
     );
     setReviewCreator(null);
+    setApproveConfirmId(null);
   };
 
   const markAsPosted = (id: string) => {
@@ -835,6 +836,10 @@ function StepCreatorManagement({
     // In prototype, just close
     setKudosCreatorId(null);
     setKudosText("Thank you so much for the amazing content! We loved working with you.");
+  };
+
+  const removeCreator = (id: string) => {
+    setManagedCreators((prev) => prev.filter((mc) => mc.creator.id !== id));
   };
 
   /* ------- Group creators by stage ------- */
@@ -937,7 +942,7 @@ function StepCreatorManagement({
 
         {/* Deliverables / Preview */}
         <div className="w-24 shrink-0">
-          {mc.contentSubmission ? (
+          {mc.contentSubmission && mc.inviteStatus !== "pending" ? (
             <Button
               variant="outline"
               size="sm"
@@ -952,7 +957,7 @@ function StepCreatorManagement({
         </div>
 
         {/* Action — right side */}
-        <div className="flex-1 flex justify-end gap-2">
+        <div className="flex-1 flex justify-end gap-2 items-center">
           {mc.inviteStatus === "pending" && (
             <Button
               size="sm"
@@ -966,7 +971,7 @@ function StepCreatorManagement({
             <Button
               size="sm"
               variant="outline"
-              className="text-xs gap-1 border-[var(--blue-300)] text-[var(--blue-700)] hover:bg-[var(--blue-50)]"
+              className="text-xs gap-1 border-[var(--brand-300)] text-[var(--brand-700)] hover:bg-[var(--brand-50)]"
               onClick={() => sendReminder(mc.creator.id)}
             >
               <Bell className="size-3" /> Send Reminder
@@ -1009,28 +1014,70 @@ function StepCreatorManagement({
               <Eye className="size-3" /> Review Now
             </Button>
           )}
+
+          {/* Three-dot menu */}
+          <div className="relative">
+            <button
+              type="button"
+              className="p-1 hover:bg-[var(--neutral-100)] rounded transition-colors"
+              onClick={() => setMoreMenuId(moreMenuId === mc.creator.id ? null : mc.creator.id)}
+            >
+              <MoreVertical className="size-4 text-[var(--neutral-400)]" />
+            </button>
+            {moreMenuId === mc.creator.id && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setMoreMenuId(null)} />
+                <div className="absolute top-8 right-0 z-30 w-48 rounded-lg border border-[var(--neutral-200)] bg-white shadow-lg py-1">
+                  <button
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-[var(--neutral-50)] text-left text-[var(--red-700)]"
+                    onClick={() => {
+                      removeCreator(mc.creator.id);
+                      setMoreMenuId(null);
+                    }}
+                  >
+                    <X className="size-3" />
+                    Remove from Campaign
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
   };
 
   /* ------- Section renderer (no white strip at top of banner) ------- */
-  const Section = ({ title, creators: sectionCreators, accentColor, accentBg, isCompletedSection }: {
+  const Section = ({ title, creators: sectionCreators, accentColor, accentBg, isCompletedSection, bulkAction }: {
     title: string;
     creators: ManagedCreator[];
     accentColor: string;
     accentBg: string;
     isCompletedSection?: boolean;
+    bulkAction?: { label: string; onClick: () => void };
   }) => {
     if (sectionCreators.length === 0) return null;
     return (
-      <Card className="overflow-hidden" style={{ border: `1px solid ${accentBg}` }}>
+      <Card className="overflow-visible" style={{ border: `1px solid ${accentBg}` }}>
         <div className="px-5 py-3" style={{ backgroundColor: accentBg }}>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold" style={{ color: accentColor }}>{title}</h3>
-            <Badge variant="outline" className="text-[10px]" style={{ borderColor: accentColor, color: accentColor }}>
-              {sectionCreators.length}
-            </Badge>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold" style={{ color: accentColor }}>{title}</h3>
+              <Badge variant="outline" className="text-[10px]" style={{ borderColor: accentColor, color: accentColor }}>
+                {sectionCreators.length}
+              </Badge>
+            </div>
+            {bulkAction && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7"
+                style={{ borderColor: accentColor, color: accentColor }}
+                onClick={bulkAction.onClick}
+              >
+                {bulkAction.label}
+              </Button>
+            )}
           </div>
         </div>
         <div className="divide-y divide-[var(--neutral-100)]">
@@ -1051,17 +1098,6 @@ function StepCreatorManagement({
           <p className="text-sm text-[var(--neutral-500)]">
             Invite creators, track content, and manage your campaign
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {pendingCount > 0 && (
-            <Button
-              size="sm"
-              className="gap-1.5 rounded-xl bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
-              onClick={inviteAll}
-            >
-              <Send className="size-3.5" /> Invite All ({pendingCount})
-            </Button>
-          )}
         </div>
       </div>
 
@@ -1145,12 +1181,20 @@ function StepCreatorManagement({
         creators={needsAction}
         accentColor="var(--orange-700)"
         accentBg="var(--orange-100)"
+        bulkAction={pendingCount > 0 ? { label: `Invite All (${pendingCount})`, onClick: inviteAll } : undefined}
       />
       <Section
         title="In Progress"
         creators={inProgress}
         accentColor="var(--blue-700)"
         accentBg="var(--blue-100)"
+        bulkAction={inProgress.some((mc) => mc.inviteStatus === "invited") ? { label: "Send All Reminders", onClick: () => {
+          setManagedCreators((prev) =>
+            prev.map((mc) =>
+              mc.inviteStatus === "invited" ? { ...mc, inviteStatus: "accepted" } : mc
+            )
+          );
+        }} : undefined}
       />
       <Section
         title="Approved — Waiting to Post"
@@ -1293,7 +1337,10 @@ function StepCreatorManagement({
                   <div className="flex gap-3">
                     <Button
                       className="flex-1 gap-2 bg-[var(--green-500)] hover:bg-[var(--green-700)]"
-                      onClick={() => approveContent(reviewCreator.creator.id)}
+                      onClick={() => {
+                        setApproveConfirmId(reviewCreator.creator.id);
+                        setApproveConfirmDate(reviewCreator.contentDueDate);
+                      }}
                     >
                       <ThumbsUp className="size-4" /> Approve
                     </Button>
@@ -1308,6 +1355,42 @@ function StepCreatorManagement({
                   </div>
                 </>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Approval Confirmation Dialog */}
+      {approveConfirmId && (
+        <Dialog open={!!approveConfirmId} onOpenChange={() => setApproveConfirmId(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Approval</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-[var(--neutral-600)]">
+                An approval email will be sent to <span className="font-semibold">{managedCreators.find((mc) => mc.creator.id === approveConfirmId)?.creator.name}</span>. They will be asked to post their content by the due date.
+              </p>
+              <div className="space-y-2">
+                <Label className="text-xs text-[var(--neutral-600)]">Post Due Date</Label>
+                <Input
+                  type="date"
+                  value={approveConfirmDate}
+                  onChange={(e) => setApproveConfirmDate(e.target.value)}
+                  className="border-[var(--neutral-200)]"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setApproveConfirmId(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-[var(--green-500)] hover:bg-[var(--green-700)]"
+                  onClick={() => confirmApproveContent(approveConfirmId, approveConfirmDate)}
+                >
+                  <ThumbsUp className="size-4" /> Confirm Approval
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -1467,6 +1550,9 @@ export default function CampaignFindTalent() {
 
   return (
     <div className="space-y-4">
+      {/* Campaign name header */}
+      <h1 className="text-xl font-bold text-[var(--neutral-800)]">Melted Balm Spring Launch</h1>
+
       {/* Step indicator */}
       <StepIndicator
         currentStep={stepNum}

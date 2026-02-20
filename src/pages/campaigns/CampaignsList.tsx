@@ -2,204 +2,179 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowRight, Megaphone, Users, ImageIcon, TrendingUp, Sparkles } from "lucide-react";
-import { MOCK_CAMPAIGNS } from "@/store/campaign-store";
-import type { CampaignStatus } from "@/store/campaign-store";
-import { formatDateRange } from "@/lib/format";
+import { Plus, ArrowRight, Megaphone } from "lucide-react";
+import { Campaign, CreatorAssignment, MOCK_CAMPAIGNS } from "@/store/campaign-store";
 
-const statusStyles: Record<CampaignStatus, { label: string; color: string; bg: string; border: string; dot: string }> = {
-  draft: { label: "Draft", color: "var(--neutral-600)", bg: "var(--neutral-100)", border: "var(--neutral-300)", dot: "var(--neutral-400)" },
-  active: { label: "Active", color: "var(--green-700)", bg: "var(--green-100)", border: "var(--green-300)", dot: "var(--green-500)" },
-  filled: { label: "Filled", color: "var(--orange-700)", bg: "var(--orange-100)", border: "var(--orange-300)", dot: "var(--orange-500)" },
-  completed: { label: "Completed", color: "var(--blue-700)", bg: "var(--blue-100)", border: "var(--blue-300)", dot: "var(--blue-500)" },
-};
+/* ------------------------------------------------------------------ */
+/*  Helpers (same as Dashboard)                                        */
+/* ------------------------------------------------------------------ */
+function campaignStatusBadge(status: Campaign["status"]) {
+  switch (status) {
+    case "active":
+      return { label: "Live", bg: "var(--green-100)", color: "var(--green-700)", border: "var(--green-300)", dot: "var(--green-500)" };
+    case "draft":
+      return { label: "Planning", bg: "var(--blue-100)", color: "var(--blue-700)", border: "var(--blue-300)", dot: "var(--blue-500)" };
+    case "filled":
+      return { label: "Filled", bg: "var(--orange-100)", color: "var(--orange-700)", border: "var(--orange-300)", dot: "var(--orange-500)" };
+    default:
+      return { label: "Completed", bg: "var(--neutral-100)", color: "var(--neutral-600)", border: "var(--neutral-300)", dot: "var(--neutral-400)" };
+  }
+}
 
-const campaignGradients = [
-  { from: "var(--brand-600)", to: "var(--brand-400)" },
-  { from: "var(--pink-500)", to: "var(--orange-500)" },
-  { from: "var(--blue-500)", to: "var(--brand-500)" },
-  { from: "var(--green-500)", to: "var(--blue-500)" },
-];
+function deriveCampaignProgress(creators: CreatorAssignment[]): number {
+  if (creators.length === 0) return 10;
+  const statuses = creators.map((c) => c.status);
+  if (statuses.every((s) => s === "complete")) return 100;
+  if (statuses.some((s) => ["content_submitted", "content_approved", "posted", "complete"].includes(s))) return 70;
+  if (statuses.some((s) => ["product_shipped", "gift_card_sent"].includes(s))) return 50;
+  if (statuses.some((s) => s === "accepted")) return 35;
+  return 15;
+}
 
+function CreatorAvatarStack({ creators }: { creators: CreatorAssignment[] }) {
+  const shown = creators.slice(0, 4);
+  const extra = creators.length - shown.length;
+  return (
+    <div className="flex items-center">
+      {shown.map((c, i) => (
+        <img
+          key={c.creatorId}
+          src={c.creatorAvatar}
+          alt={c.creatorName}
+          title={c.creatorName}
+          className="h-7 w-7 rounded-full border-2 border-white object-cover"
+          style={{ marginLeft: i === 0 ? 0 : -6, zIndex: shown.length - i }}
+        />
+      ))}
+      {extra > 0 && (
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[var(--neutral-200)] text-[10px] font-medium text-[var(--neutral-600)]"
+          style={{ marginLeft: -6, zIndex: 0 }}
+        >
+          +{extra}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  CampaignsList                                                      */
+/* ================================================================== */
 export default function CampaignsList() {
   const campaigns = MOCK_CAMPAIGNS;
 
+  const gradientColors = [
+    { from: "var(--brand-600)", to: "var(--brand-400)" },
+    { from: "var(--pink-500)", to: "var(--orange-500)" },
+    { from: "var(--blue-500)", to: "var(--brand-500)" },
+    { from: "var(--green-500)", to: "var(--blue-500)" },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Header with gradient accent */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--orange-100)]">
             <Megaphone className="size-6 text-[var(--orange-500)]" />
           </div>
-          <div>
-            <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">Campaigns</h1>
-            <p className="text-sm text-[var(--neutral-500)]">
-              Manage all your creator collaboration campaigns.
-            </p>
-          </div>
+          <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">Campaigns</h1>
         </div>
-        <Button asChild className="gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90 transition-opacity">
+        <Button asChild className="gap-2 rounded-xl bg-[var(--brand-700)] hover:bg-[var(--brand-800)] text-white">
           <Link to="/campaigns/create">
             <Plus className="size-4" /> Create Campaign
           </Link>
         </Button>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Total", value: campaigns.length, icon: Megaphone, color: "var(--brand-600)", bg: "var(--brand-100)" },
-          { label: "Active", value: campaigns.filter(c => c.status === "active").length, icon: TrendingUp, color: "var(--green-600)", bg: "var(--green-100)" },
-          { label: "Creators", value: campaigns.reduce((sum, c) => sum + c.creators.length, 0), icon: Users, color: "var(--pink-500)", bg: "var(--pink-100)" },
-          { label: "Content", value: campaigns.reduce((sum, c) => sum + c.creators.reduce((s2, cr) => s2 + cr.contentSubmissions.length, 0), 0), icon: ImageIcon, color: "var(--blue-500)", bg: "var(--blue-100)" },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="flex items-center gap-3 rounded-xl border border-[var(--neutral-200)] bg-white p-3"
-          >
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ backgroundColor: stat.bg }}
-            >
-              <stat.icon className="size-4" style={{ color: stat.color }} />
+      {/* Campaign cards — same style as Dashboard */}
+      {campaigns.length === 0 ? (
+        <Card className="border-dashed border-[var(--neutral-300)]">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand-100)] mb-3">
+              <Megaphone className="size-7 text-[var(--brand-700)]" />
             </div>
-            <div>
-              <p className="text-lg font-bold text-[var(--neutral-800)]">{stat.value}</p>
-              <p className="text-[11px] text-[var(--neutral-500)]">{stat.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+            <p className="font-medium text-[var(--neutral-600)]">No campaigns yet</p>
+            <p className="mt-1 text-sm text-[var(--neutral-500)]">
+              Create your first campaign to start working with creators.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {campaigns.map((campaign, idx) => {
+            const statusBadge = campaignStatusBadge(campaign.status);
+            const progress = deriveCampaignProgress(campaign.creators);
+            const gradient = gradientColors[idx % gradientColors.length];
 
-      <div className="space-y-4">
-        {campaigns.map((campaign, idx) => {
-          const statusConfig = statusStyles[campaign.status];
-          const gradient = campaignGradients[idx % campaignGradients.length];
-          const budgetPercent =
-            campaign.budgetType === "spend_cap" && campaign.budgetCapAmount
-              ? Math.round((campaign.budgetAllocated / campaign.budgetCapAmount) * 100)
-              : campaign.budgetType === "product_inventory" && campaign.budgetInventoryCount
-                ? Math.round((campaign.budgetAllocated / campaign.budgetInventoryCount) * 100)
-                : 0;
-
-          const budgetLabel =
-            campaign.budgetType === "spend_cap"
-              ? `$${campaign.budgetAllocated.toLocaleString()} / $${campaign.budgetCapAmount?.toLocaleString()}`
-              : campaign.budgetType === "product_inventory"
-                ? `${campaign.budgetAllocated} / ${campaign.budgetInventoryCount} units`
-                : "Flexible";
-
-          return (
-            <Card
-              key={campaign.id}
-              className="border-[var(--neutral-200)] transition-all hover:border-[var(--brand-400)] hover:shadow-medium-top overflow-hidden"
-            >
-              {/* Top gradient accent bar */}
-              <div
-                className="h-1"
-                style={{ background: `linear-gradient(90deg, ${gradient.from}, ${gradient.to})` }}
-              />
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-base font-bold text-[var(--neutral-800)]">
-                        {campaign.title}
-                      </h3>
-                      <Badge
-                        className="border text-xs font-semibold gap-1"
-                        style={{
-                          backgroundColor: statusConfig.bg,
-                          color: statusConfig.color,
-                          borderColor: statusConfig.border,
-                        }}
-                      >
-                        <span className="size-1.5 rounded-full" style={{ backgroundColor: statusConfig.dot }} />
-                        {statusConfig.label}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="border-[var(--neutral-200)] text-xs font-normal text-[var(--neutral-600)]"
-                      >
-                        {campaign.mode === "open" ? "Open" : "Targeted"}
-                      </Badge>
-                    </div>
-
-                    <div className="mt-3 flex items-center gap-5 text-sm text-[var(--neutral-600)]">
-                      <span className="flex items-center gap-1.5">
-                        <Users className="size-3.5 text-[var(--pink-500)]" />
-                        {campaign.creators.length} creators
-                      </span>
-                      <span>
-                        {formatDateRange(campaign.flightDateStart, campaign.flightDateEnd)}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        {campaign.platforms.map((p) => (
-                          <Badge
-                            key={p}
-                            variant="outline"
-                            className="border-[var(--neutral-200)] text-[10px] font-normal capitalize"
-                          >
-                            {p}
-                          </Badge>
-                        ))}
-                      </span>
-                    </div>
-
-                    {/* Budget bar — gradient style */}
-                    {campaign.budgetType !== "flexible" && (
-                      <div className="mt-4 max-w-md">
-                        <div className="mb-1 flex items-center justify-between text-xs">
-                          <span className="text-[var(--neutral-500)]">Budget</span>
-                          <span className="font-medium text-[var(--neutral-800)]">
-                            {budgetLabel} ({budgetPercent}%)
-                          </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--neutral-200)]">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${budgetPercent}%`,
-                              background: `linear-gradient(90deg, ${gradient.from}, ${gradient.to})`,
-                            }}
-                          />
-                        </div>
+            return (
+              <Link
+                key={campaign.id}
+                to={`/campaigns/${campaign.id}/find-talent`}
+                className="block"
+              >
+                <Card className="border-[var(--neutral-200)] transition-all hover:border-[var(--brand-400)] hover:shadow-medium-top overflow-hidden">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <Badge
+                          className="shrink-0 border text-[11px] font-semibold uppercase tracking-wide gap-1"
+                          style={{
+                            backgroundColor: statusBadge.bg,
+                            color: statusBadge.color,
+                            borderColor: statusBadge.border,
+                          }}
+                        >
+                          <span className="size-1.5 rounded-full" style={{ backgroundColor: statusBadge.dot }} />
+                          {statusBadge.label}
+                        </Badge>
+                        <p className="font-semibold text-[var(--neutral-800)]">{campaign.title}</p>
                       </div>
-                    )}
-                  </div>
+                      <ArrowRight className="mt-0.5 size-4 shrink-0 text-[var(--neutral-400)]" />
+                    </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="gap-1 rounded-lg border-[var(--brand-300)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
-                  >
-                    <Link to={`/campaigns/${campaign.id}`}>
-                      View Details <ArrowRight className="size-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    <div className="mt-4">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--neutral-200)]">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${progress}%`,
+                            background: `linear-gradient(90deg, ${gradient.from}, ${gradient.to})`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--neutral-400)]">
+                        <span>{progress}% complete</span>
+                        <span>{campaign.creators.length} creator{campaign.creators.length !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
 
-      {campaigns.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--brand-300)] bg-gradient-hero py-20">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-brand shadow-brand-glow mb-4">
-            <Sparkles className="size-8 text-white" />
-          </div>
-          <h3 className="text-base font-bold text-[var(--neutral-800)]">No campaigns yet</h3>
-          <p className="mt-1 text-sm text-[var(--neutral-500)]">
-            Create your first campaign to start working with creators.
-          </p>
-          <Button asChild className="mt-4 gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90">
-            <Link to="/campaigns/create">
-              <Plus className="size-4" /> Create Campaign
-            </Link>
-          </Button>
+                    <div className="mt-3 flex items-center justify-between">
+                      <CreatorAvatarStack creators={campaign.creators} />
+                      <div className="flex items-center gap-4 text-xs text-[var(--neutral-500)]">
+                        {campaign.budgetAllocated > 0 && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">${campaign.budgetAllocated.toLocaleString()}</span>
+                            budget
+                          </span>
+                        )}
+                        <span>
+                          {campaign.flightDateStart
+                            ? new Date(campaign.flightDateStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : ""}{" "}
+                          –{" "}
+                          {campaign.flightDateEnd
+                            ? new Date(campaign.flightDateEnd).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

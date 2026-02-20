@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,8 @@ import {
   Brain,
   Users,
   Zap,
-  Eye,
-  Shield,
   MessageSquare,
   Heart,
-  Mail,
   Sliders,
 } from "lucide-react";
 import {
@@ -85,7 +82,7 @@ function StepIndicator({
                 backgroundColor: isCurrent
                   ? "var(--brand-100)"
                   : isComplete
-                    ? "var(--green-100)"
+                    ? "var(--brand-0)"
                     : "transparent",
                 cursor: stepNum < currentStep ? "pointer" : "default",
               }}
@@ -94,7 +91,7 @@ function StepIndicator({
                 className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all"
                 style={{
                   backgroundColor: isComplete
-                    ? "var(--green-500)"
+                    ? "var(--brand-700)"
                     : isCurrent
                       ? "var(--brand-700)"
                       : "var(--neutral-200)",
@@ -109,7 +106,7 @@ function StepIndicator({
                   color: isCurrent
                     ? "var(--brand-700)"
                     : isComplete
-                      ? "var(--green-700)"
+                      ? "var(--brand-600)"
                       : "var(--neutral-400)",
                 }}
               >
@@ -120,7 +117,7 @@ function StepIndicator({
               <div
                 className="h-px w-10"
                 style={{
-                  backgroundColor: isComplete ? "var(--green-300)" : "var(--neutral-200)",
+                  backgroundColor: isComplete ? "var(--brand-300)" : "var(--neutral-200)",
                 }}
               />
             )}
@@ -246,9 +243,6 @@ function StepGoals({
         <h2 className="text-3xl font-bold text-[var(--neutral-800)]">
           What are your campaign goals?
         </h2>
-        <p className="mt-2 text-[var(--neutral-500)]">
-          Select all that apply — we'll tailor the experience for you.
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -296,10 +290,9 @@ function StepGoals({
         <div className="flex items-start gap-3">
           <Brain className="size-5 text-[var(--brand-700)] mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-[var(--neutral-800)]">Why small creators deliver big results</p>
+            <p className="text-sm font-semibold text-[var(--neutral-800)]">What makes Benable special</p>
             <p className="mt-1 text-xs text-[var(--neutral-500)] leading-relaxed">
-              Creators with under 10K followers generate 3-5x higher engagement rates than macro influencers.
-              Their audiences trust them like friends — and that trust converts.
+              Benable connects brands with creators who give authentic recommendations to their audience. Their followers trust them — and that trust converts.
             </p>
           </div>
         </div>
@@ -466,7 +459,7 @@ function StepDetails({
                 Select the types of content you'd like creators to produce.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {CONTENT_FORMAT_TILES.map((tile) => {
                 const isBenable = tile.value === "benable_post";
                 const selected = draft.contentFormats.includes(tile.value);
@@ -590,7 +583,7 @@ function StepDetails({
                             <Input type="number" placeholder="$50" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.giftCardValue || ""} onChange={(e) => updateCompensation(comp.type, "giftCardValue", Number(e.target.value))} />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs text-[var(--neutral-600)]">Brand/Store</Label>
+                            <Label className="text-xs text-[var(--neutral-600)]">Product / Brand</Label>
                             <Input placeholder="e.g., Ulta Beauty" className="h-8 text-sm bg-white border-[var(--neutral-200)]" value={comp.giftCardBrand || ""} onChange={(e) => updateCompensation(comp.type, "giftCardBrand", e.target.value)} />
                           </div>
                           <div className="space-y-1">
@@ -664,6 +657,7 @@ function StepBrief({
 }) {
   const [nicheSearch, setNicheSearch] = useState("");
   const [customObligation, setCustomObligation] = useState("");
+  const [obligationsOpen, setObligationsOpen] = useState(false);
 
   const update = useCallback(
     <K extends keyof CampaignDraft>(field: K, value: CampaignDraft[K]) => {
@@ -776,99 +770,113 @@ function StepBrief({
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Creator Obligations — cleaner, grouped by platform, no emoji */}
+      {/* Creator Obligations — collapsible toggle */}
       <div className="space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Obligations</h3>
-          <p className="mt-1 text-sm text-[var(--neutral-500)]">
-            Select requirements creators must fulfill. Click to toggle.
-          </p>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-[var(--brand-400)] text-[var(--brand-700)] hover:bg-[var(--brand-0)] justify-start"
+          onClick={() => setObligationsOpen(!obligationsOpen)}
+        >
+          <Sparkles className="size-4 mr-2" />
+          Set Creator Obligations
+        </Button>
 
-        {groupedObligations.map((group) => (
-          <div key={group.platform}>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">
-              {group.platform}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {group.obligations.map((obligation) => {
-                const active = obligation.enabled;
-                return (
-                  <button
-                    key={obligation.id}
-                    type="button"
-                    onClick={() => toggleObligation(obligation.id)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
-                    style={{
-                      backgroundColor: active ? "var(--brand-0)" : "var(--neutral-50)",
-                      border: `1.5px solid ${active ? "var(--brand-400)" : "var(--neutral-200)"}`,
-                    }}
-                  >
-                    <div
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all"
-                      style={{
-                        backgroundColor: active ? "var(--brand-700)" : "white",
-                        border: active ? "none" : "1.5px solid var(--neutral-300)",
-                      }}
-                    >
-                      {active && <Check className="size-3 text-white" />}
-                    </div>
-                    <span className="text-sm text-[var(--neutral-700)]">{obligation.label}</span>
-                  </button>
-                );
-              })}
+        {obligationsOpen && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Obligations</h3>
+              <p className="mt-1 text-sm text-[var(--neutral-500)]">
+                Select requirements creators must fulfill. Click to toggle.
+              </p>
             </div>
-          </div>
-        ))}
 
-        {/* Custom obligations */}
-        {draft.customObligations.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">Custom</p>
-            <div className="grid grid-cols-2 gap-2">
-              {draft.customObligations.map((co, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 rounded-lg border-[1.5px] border-[var(--brand-400)] bg-[var(--brand-0)] px-3 py-2.5"
-                >
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[var(--brand-700)]">
-                    <Check className="size-3 text-white" />
-                  </div>
-                  <span className="flex-1 text-sm text-[var(--neutral-700)]">{co}</span>
-                  <button type="button" onClick={() => removeCustomObligation(idx)} className="shrink-0 rounded p-0.5 hover:bg-[var(--neutral-100)]">
-                    <X className="size-3.5 text-[var(--neutral-400)]" />
-                  </button>
+            {groupedObligations.map((group) => (
+              <div key={group.platform}>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">
+                  {group.platform}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.obligations.map((obligation) => {
+                    const active = obligation.enabled;
+                    return (
+                      <button
+                        key={obligation.id}
+                        type="button"
+                        onClick={() => toggleObligation(obligation.id)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
+                        style={{
+                          backgroundColor: active ? "var(--brand-0)" : "var(--neutral-50)",
+                          border: `1.5px solid ${active ? "var(--brand-400)" : "var(--neutral-200)"}`,
+                        }}
+                      >
+                        <div
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all"
+                          style={{
+                            backgroundColor: active ? "var(--brand-700)" : "white",
+                            border: active ? "none" : "1.5px solid var(--neutral-300)",
+                          }}
+                        >
+                          {active && <Check className="size-3 text-white" />}
+                        </div>
+                        <span className="text-sm text-[var(--neutral-700)]">{obligation.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            ))}
+
+            {/* Custom obligations */}
+            {draft.customObligations.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">Custom</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {draft.customObligations.map((co, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 rounded-lg border-[1.5px] border-[var(--brand-400)] bg-[var(--brand-0)] px-3 py-2.5"
+                    >
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[var(--brand-700)]">
+                        <Check className="size-3 text-white" />
+                      </div>
+                      <span className="flex-1 text-sm text-[var(--neutral-700)]">{co}</span>
+                      <button type="button" onClick={() => removeCustomObligation(idx)} className="shrink-0 rounded p-0.5 hover:bg-[var(--neutral-100)]">
+                        <X className="size-3.5 text-[var(--neutral-400)]" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add custom — styled like existing obligations */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-50)] px-3 py-2">
+                <Plus className="size-4 text-[var(--neutral-400)]" />
+                <input
+                  className="flex-1 bg-transparent text-sm text-[var(--neutral-700)] placeholder:text-[var(--neutral-400)] outline-none"
+                  placeholder="Add a custom obligation..."
+                  value={customObligation}
+                  onChange={(e) => setCustomObligation(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); addCustomObligation(); }
+                  }}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 border-[var(--brand-400)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
+                onClick={addCustomObligation}
+                disabled={!customObligation.trim()}
+              >
+                Add
+              </Button>
             </div>
           </div>
         )}
-
-        {/* Add custom — styled like existing obligations */}
-        <div className="flex items-center gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-50)] px-3 py-2">
-            <Plus className="size-4 text-[var(--neutral-400)]" />
-            <input
-              className="flex-1 bg-transparent text-sm text-[var(--neutral-700)] placeholder:text-[var(--neutral-400)] outline-none"
-              placeholder="Add a custom obligation..."
-              value={customObligation}
-              onChange={(e) => setCustomObligation(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); addCustomObligation(); }
-              }}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0 border-[var(--brand-400)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
-            onClick={addCustomObligation}
-            disabled={!customObligation.trim()}
-          >
-            Add
-          </Button>
-        </div>
       </div>
 
       <Separator className="bg-[var(--neutral-200)]" />
@@ -978,11 +986,6 @@ function StepReview({
     word_of_mouth: "Word of Mouth", community: "Community Building",
   };
 
-  const compLabels: Record<CompensationType, string> = {
-    gifted: "Gifted Product", gift_card: "Gift Card", discount: "Discount Code",
-    paid: "Paid Fee", commission_boost: "Commission Boost",
-  };
-
   const formatLabel: Record<ContentFormat, string> = {
     instagram_post: "IG Post", instagram_reel: "IG Reel",
     instagram_story: "IG Story", tiktok_video: "TikTok Video",
@@ -1032,7 +1035,7 @@ function StepReview({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <ReviewCard title="Campaign Goals" editStep={1} bgColor="var(--brand-0)" borderColor="var(--brand-200)">
+        <ReviewCard title="🎯 Campaign Goals" editStep={1} bgColor="var(--brand-0)" borderColor="var(--brand-200)">
           <div className="flex flex-wrap gap-1.5">
             {draft.goals.length > 0
               ? draft.goals.map((g) => (
@@ -1044,7 +1047,7 @@ function StepReview({
           </div>
         </ReviewCard>
 
-        <ReviewCard title="Campaign Setup" editStep={2} bgColor="var(--blue-100)" borderColor="var(--blue-200)">
+        <ReviewCard title="⚙️ Campaign Setup" editStep={2} bgColor="var(--blue-100)" borderColor="var(--blue-200)">
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-[var(--neutral-500)] text-xs">Mode</p>
@@ -1066,31 +1069,39 @@ function StepReview({
         </ReviewCard>
 
         {enabledComps.length > 0 && (
-          <ReviewCard title="Compensation" editStep={2} bgColor="var(--green-100)" borderColor="var(--green-200)">
-            <div className="space-y-2">
+          <ReviewCard title="💰 Compensation" editStep={2} bgColor="var(--green-100)" borderColor="var(--green-200)">
+            <div className="space-y-3">
               {enabledComps.map((comp) => {
+                const tile = COMPENSATION_TILES.find((t) => t.type === comp.type);
+                if (!tile) return null;
                 let detail = "";
-                if (comp.type === "gifted" && comp.productName) detail = ` — ${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
-                if (comp.type === "gift_card" && comp.giftCardValue) detail = ` — $${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
-                if (comp.type === "paid" && comp.feeMin) detail = ` — $${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
-                if (comp.type === "commission_boost" && comp.commissionRate) detail = ` — ${comp.commissionRate}%`;
+                if (comp.type === "gifted" && comp.productName) detail = `${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
+                if (comp.type === "gift_card" && comp.giftCardValue) detail = `$${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
+                if (comp.type === "paid" && comp.feeMin) detail = `$${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
+                if (comp.type === "commission_boost" && comp.commissionRate) detail = `${comp.commissionRate}%`;
                 return (
-                  <p key={comp.type} className="text-sm text-[var(--neutral-800)]">
-                    {compLabels[comp.type]}{detail}
-                  </p>
+                  <div key={comp.type} className="flex items-center gap-3 rounded-lg p-2.5" style={{ backgroundColor: `${tile.color}10` }}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor: tile.bgColor }}>
+                      <tile.icon className="size-4" style={{ color: tile.color }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold" style={{ color: tile.color }}>{tile.label}</p>
+                      {detail && <p className="text-xs text-[var(--neutral-600)]">{detail}</p>}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           </ReviewCard>
         )}
 
-        <ReviewCard title="Campaign Brief" editStep={3} bgColor="var(--orange-100)" borderColor="var(--orange-200)">
+        <ReviewCard title="📝 Campaign Brief" editStep={3} bgColor="var(--orange-100)" borderColor="var(--orange-200)">
           <p className="text-sm text-[var(--neutral-800)] line-clamp-4">
             {draft.description || "No description provided."}
           </p>
         </ReviewCard>
 
-        <ReviewCard title="Creator Obligations" editStep={3} bgColor="#F3EEFF" borderColor="#C9B8F0">
+        <ReviewCard title="📋 Creator Obligations" editStep={3} bgColor="#F3EEFF" borderColor="#C9B8F0">
           {enabledObligations.length > 0 || draft.customObligations.length > 0 ? (
             <div className="space-y-1.5">
               {enabledObligations.map((o) => (
@@ -1111,7 +1122,7 @@ function StepReview({
           )}
         </ReviewCard>
 
-        <ReviewCard title="Content Niche & Creators" editStep={3} bgColor="var(--neutral-100)" borderColor="var(--neutral-200)">
+        <ReviewCard title="🎨 Content Niche & Creators" editStep={3} bgColor="var(--neutral-100)" borderColor="var(--neutral-200)">
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-[var(--neutral-500)] text-xs">Niches</p>
@@ -1135,191 +1146,27 @@ function StepReview({
 }
 
 // ═══════════════════════════════════════════════════
-// AI MATCHING SCREEN — slower progress, email message
-// ═══════════════════════════════════════════════════
-const AI_STEPS = [
-  { label: "Analyzing your brand vibe", icon: Brain, duration: 4000 },
-  { label: "Scanning creator network", icon: Users, duration: 5000 },
-  { label: "Filtering by content niche", icon: Search, duration: 4000 },
-  { label: "Predicting engagement & ROI", icon: Zap, duration: 5000 },
-  { label: "Finalizing recommendations", icon: Sparkles, duration: 4000 },
-];
-
-function AIMatchingScreen() {
-  const [activeStep, setActiveStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const totalDuration = AI_STEPS.reduce((sum, s) => sum + s.duration, 0);
-    let elapsed = 0;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    AI_STEPS.forEach((step, idx) => {
-      const timer = setTimeout(() => {
-        setActiveStep(idx);
-      }, elapsed);
-      timers.push(timer);
-      elapsed += step.duration;
-    });
-
-    // Slower progress bar
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) return 100;
-        return prev + 100 / (totalDuration / 150);
-      });
-    }, 150);
-
-    // Navigate after done
-    const navTimer = setTimeout(() => {
-      navigate("/campaigns/camp-001/find-talent");
-    }, totalDuration + 2000);
-    timers.push(navTimer);
-
-    return () => {
-      timers.forEach(clearTimeout);
-      clearInterval(progressInterval);
-    };
-  }, [navigate]);
-
-  return (
-    <div className="flex flex-col items-center justify-center py-16">
-      {/* Animated brand circle */}
-      <div className="relative mb-8">
-        <div
-          className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[var(--brand-700)]"
-          style={{ animation: "pulse 2.5s ease-in-out infinite" }}
-        >
-          <Sparkles className="size-10 text-white" />
-        </div>
-      </div>
-
-      <h2 className="text-2xl font-bold text-[var(--neutral-800)] mb-2">
-        Benable AI is finding your creators
-      </h2>
-      <p className="max-w-md text-center text-sm text-[var(--neutral-500)] mb-2">
-        We're matching your campaign with the best creators on our network.
-      </p>
-
-      {/* Email notification message */}
-      <div className="flex items-center gap-2 rounded-full bg-[var(--blue-100)] px-4 py-2 mb-8">
-        <Mail className="size-4 text-[var(--blue-700)]" />
-        <span className="text-xs font-medium text-[var(--blue-700)]">
-          You'll receive an email when your matches are ready
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div className="w-full max-w-md mb-8">
-        <div className="h-2.5 w-full rounded-full bg-[var(--neutral-100)] overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: `${Math.min(progress, 100)}%`,
-              background: "var(--brand-600)",
-              transition: "width 0.2s linear",
-            }}
-          />
-        </div>
-        <p className="mt-2 text-center text-xs text-[var(--neutral-400)]">
-          {Math.min(Math.round(progress), 100)}% complete
-        </p>
-      </div>
-
-      {/* Step-by-step status */}
-      <div className="w-full max-w-sm space-y-3 mb-10">
-        {AI_STEPS.map((step, idx) => {
-          const isActive = idx === activeStep;
-          const isDone = idx < activeStep;
-          const isPending = idx > activeStep;
-          return (
-            <div
-              key={idx}
-              className="flex items-center gap-3 rounded-lg px-4 py-2.5 transition-all"
-              style={{
-                backgroundColor: isActive ? "var(--brand-0)" : "transparent",
-                border: isActive ? "1px solid var(--brand-300)" : "1px solid transparent",
-                opacity: isPending ? 0.4 : 1,
-              }}
-            >
-              <div
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: isDone ? "var(--green-100)" : isActive ? "var(--brand-100)" : "var(--neutral-100)",
-                }}
-              >
-                {isDone ? (
-                  <Check className="size-3.5 text-[var(--green-700)]" />
-                ) : (
-                  <step.icon className="size-3.5" style={{ color: isActive ? "var(--brand-700)" : "var(--neutral-400)" }} />
-                )}
-              </div>
-              <span className="text-sm font-medium" style={{ color: isDone ? "var(--green-700)" : isActive ? "var(--brand-700)" : "var(--neutral-400)" }}>
-                {step.label}
-              </span>
-              {isActive && (
-                <div className="ml-auto flex gap-0.5">
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand-700)]" style={{ animationDelay: "0ms" }} />
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand-700)]" style={{ animationDelay: "150ms" }} />
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand-700)]" style={{ animationDelay: "300ms" }} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Feature cards */}
-      <div className="grid w-full max-w-lg grid-cols-3 gap-3">
-        {[
-          { icon: Eye, title: "Brand Match", desc: "Creators aligned with your aesthetic", color: "var(--brand-700)", bg: "var(--brand-100)" },
-          { icon: Shield, title: "Quality Check", desc: "Verified authentic engagement", color: "var(--green-600)", bg: "var(--green-100)" },
-          { icon: Zap, title: "ROI Prediction", desc: "Estimated campaign performance", color: "var(--orange-500)", bg: "var(--orange-100)" },
-        ].map((card, idx) => (
-          <div
-            key={idx}
-            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--neutral-200)] bg-white p-4 text-center"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: card.bg }}>
-              <card.icon className="size-5" style={{ color: card.color }} />
-            </div>
-            <p className="text-xs font-semibold text-[var(--neutral-800)]">{card.title}</p>
-            <p className="text-[10px] text-[var(--neutral-500)]">{card.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════
 // MAIN CREATE CAMPAIGN PAGE
 // ═══════════════════════════════════════════════════
 export default function CreateCampaign() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<CampaignDraft>({ ...emptyCampaignDraft });
-  const [launched, setLaunched] = useState(false);
 
   const totalSteps = 4;
-  const goNext = () => setStep((s) => Math.min(s + 1, totalSteps));
+  const goNext = () => {
+    setStep((s) => Math.min(s + 1, totalSteps));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
-  const goToStep = (s: number) => setStep(s);
-
-  const handleLaunch = () => {
-    setLaunched(true);
+  const goToStep = (s: number) => {
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (launched) {
-    return <AIMatchingScreen />;
-  }
+  const handleLaunch = () => {
+    navigate("/campaigns/camp-001/find-talent");
+  };
 
   const nextLabel = (() => {
     switch (step) {

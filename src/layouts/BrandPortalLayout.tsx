@@ -21,7 +21,6 @@ import {
   Plus,
   ListChecks,
   Users,
-  MessageSquare,
   Settings,
   Bell,
   TrendingUp,
@@ -48,25 +47,18 @@ const NAV_ITEMS = [
     ],
   },
   {
-    label: "Creators",
-    path: "/creators",
-    icon: Users,
-    color: "var(--pink-500)",
-    bgColor: "var(--pink-100)",
-  },
-  {
-    label: "Messages",
-    path: "/messages",
-    icon: MessageSquare,
-    color: "var(--blue-500)",
-    bgColor: "var(--blue-100)",
-  },
-  {
     label: "Brand Settings",
     path: "/settings",
     icon: Settings,
     color: "var(--neutral-500)",
     bgColor: "var(--neutral-100)",
+  },
+  {
+    label: "Browse All Creators",
+    path: "/creators",
+    icon: Users,
+    color: "var(--pink-500)",
+    bgColor: "var(--pink-100)",
   },
 ];
 
@@ -83,8 +75,8 @@ export default function BrandPortalLayout() {
       <Sidebar collapsible="none" className="border-r border-[var(--neutral-200)] bg-gradient-sidebar">
         <SidebarHeader className="px-5 py-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand shadow-brand-glow">
-              <span className="text-base font-bold text-white">B</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-700)]">
+              <span className="text-base font-bold text-white tracking-tight">b</span>
             </div>
             <div>
               <p className="text-base font-bold text-[var(--neutral-800)]">Benable</p>
@@ -214,8 +206,8 @@ export default function BrandPortalLayout() {
         </SidebarContent>
 
         {/* Upgrade Plan Card — inspired by Benable business dashboard */}
-        <div className="px-4 pb-3">
-          <div className="rounded-xl bg-gradient-brand p-4 text-white">
+        <NavLink to="/upgrade" className="block px-4 pb-3">
+          <div className="rounded-xl bg-gradient-brand p-4 text-white transition-opacity hover:opacity-90">
             <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
               <TrendingUp className="size-4" />
             </div>
@@ -224,7 +216,7 @@ export default function BrandPortalLayout() {
               Get more features for your brand
             </p>
           </div>
-        </div>
+        </NavLink>
 
         <SidebarFooter className="px-5 py-4 border-t border-[var(--neutral-200)]">
           <div className="flex items-center gap-3">
