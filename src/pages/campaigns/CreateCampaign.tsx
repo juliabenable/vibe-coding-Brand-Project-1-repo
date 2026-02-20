@@ -129,10 +129,12 @@ const COMPENSATION_TILES: {
   { type: "commission_boost", label: "Commission Boost", icon: TrendingUp, color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0", iconBg: "#DDD0F7" },
 ];
 
-// ─── Campaign Goal tiles (full-page Step 1) ───
+// ─── Campaign Goal tiles (icon-based, matching FindTalent design) ───
+import { MessageSquare, Heart } from "lucide-react";
+
 const GOAL_TILES: {
   value: CampaignGoal;
-  emoji: string;
+  icon: React.ElementType;
   title: string;
   description: string;
   color: string;
@@ -141,45 +143,45 @@ const GOAL_TILES: {
 }[] = [
   {
     value: "word_of_mouth",
-    emoji: "💬",
+    icon: MessageSquare,
     title: "Word of Mouth",
-    description: "Connect with influencers who will share your products with their engaged followers.",
+    description: "Get genuine recommendations from trusted voices who love your product.",
     color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)",
   },
   {
     value: "product_launch",
-    emoji: "🎁",
+    icon: Gift,
     title: "Product Seeding",
     description: "Send products to creators for authentic reviews and unboxing content.",
     color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)",
   },
   {
     value: "ugc",
-    emoji: "📸",
-    title: "Content Creation",
-    description: "Get authentic UGC and branded content for your marketing channels.",
-    color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)",
+    icon: Heart,
+    title: "Authentic UGC",
+    description: "Real content from real people who love your product.",
+    color: "#C2528B", bgColor: "#FDF2F8", borderColor: "#F9A8D4",
   },
   {
     value: "awareness",
-    emoji: "📢",
-    title: "Brand Awareness",
-    description: "Increase brand visibility and reach through influencer partnerships.",
+    icon: Target,
+    title: "Reach a Niche Audience",
+    description: "Connect with exactly the right people through influencer partnerships.",
     color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)",
   },
   {
     value: "sales",
-    emoji: "💰",
+    icon: Zap,
     title: "Drive Sales",
     description: "Generate conversions and revenue through creator-driven promotions.",
-    color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0",
+    color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)",
   },
   {
     value: "community",
-    emoji: "🏘️",
-    title: "Community Building",
-    description: "Foster authentic connections between your brand and target audiences.",
-    color: "var(--brand-700)", bgColor: "var(--brand-0)", borderColor: "var(--brand-300)",
+    icon: Users,
+    title: "Build Community",
+    description: "Grow a loyal community around your brand with authentic connections.",
+    color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0",
   },
 ];
 
@@ -211,24 +213,29 @@ function StepGoals({
 
   return (
     <div className="mx-auto max-w-2xl py-4">
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-100)] px-4 py-1.5 mb-4">
+          <Sparkles className="size-4 text-[var(--brand-700)]" />
+          <span className="text-sm font-medium text-[var(--brand-700)]">Powered by Benable AI</span>
+        </div>
+        <h2 className="text-3xl font-bold text-[var(--neutral-800)]">
           What are your campaign goals?
         </h2>
-        <p className="mt-2 text-sm text-[var(--neutral-500)]">
-          Select all that apply. This helps us tailor the experience for you.
+        <p className="mt-2 text-[var(--neutral-500)]">
+          Select all that apply — we'll tailor the experience for you.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {GOAL_TILES.map((goal) => {
           const selected = draft.goals.includes(goal.value);
+          const GoalIcon = goal.icon;
           return (
             <button
               key={goal.value}
               type="button"
               onClick={() => toggleGoal(goal.value)}
-              className="relative flex flex-col items-start gap-2 rounded-xl p-5 text-left transition-all"
+              className="relative flex items-center gap-4 rounded-xl p-4 text-left transition-all"
               style={{
                 backgroundColor: selected ? goal.bgColor : "white",
                 border: `2px solid ${selected ? goal.borderColor : "var(--neutral-200)"}`,
@@ -242,16 +249,35 @@ function StepGoals({
                   <Check className="size-3 text-white" />
                 </div>
               )}
-              <span className="text-2xl">{goal.emoji}</span>
-              <p className="text-sm font-bold" style={{ color: selected ? goal.color : "var(--neutral-800)" }}>
-                {goal.title}
-              </p>
-              <p className="text-xs leading-relaxed" style={{ color: selected ? goal.color : "var(--neutral-500)" }}>
-                {goal.description}
-              </p>
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                style={{ backgroundColor: selected ? `${goal.color}20` : goal.bgColor }}
+              >
+                <GoalIcon className="size-5" style={{ color: goal.color }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: selected ? goal.color : "var(--neutral-800)" }}>
+                  {goal.title}
+                </p>
+                <p className="text-xs text-[var(--neutral-500)]">{goal.description}</p>
+              </div>
             </button>
           );
         })}
+      </div>
+
+      {/* Value proposition */}
+      <div className="mt-8 rounded-xl border border-[var(--neutral-200)] bg-[var(--neutral-100)] p-5">
+        <div className="flex items-start gap-3">
+          <Brain className="size-5 text-[var(--brand-700)] mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-[var(--neutral-800)]">Why small creators deliver big results</p>
+            <p className="mt-1 text-xs text-[var(--neutral-500)] leading-relaxed">
+              Creators with under 10K followers generate 3-5x higher engagement rates than macro influencers.
+              Their audiences trust them like friends — and that trust converts.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
