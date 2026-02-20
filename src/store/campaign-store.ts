@@ -1,7 +1,7 @@
 // Campaign data types and store — based on Brand Portal v2 spec
 
 export type CampaignMode = "open" | "targeted" | "debut";
-export type CampaignGoal = "awareness" | "sales" | "product_launch" | "ugc";
+export type CampaignGoal = "awareness" | "sales" | "product_launch" | "ugc" | "word_of_mouth" | "community";
 export type Platform = "benable" | "instagram" | "tiktok";
 export type ContentFormat =
   | "instagram_post"

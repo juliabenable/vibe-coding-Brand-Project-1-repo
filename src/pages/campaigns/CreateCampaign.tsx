@@ -30,10 +30,15 @@ import {
   Lock,
   FileText,
   Search,
+  MessageCircle,
+  Package,
+  Camera,
   Megaphone,
   ShoppingCart,
-  Rocket,
-  Camera,
+  Users,
+  Instagram,
+  Video,
+  Star,
 } from "lucide-react";
 import {
   emptyCampaignDraft,
@@ -46,59 +51,52 @@ import {
   type CreatorType,
 } from "@/store/campaign-store";
 
-// ─── Step indicator ───
-function StepIndicator({ currentStep }: { currentStep: number }) {
-  const steps = ["Campaign Setup", "Campaign Brief", "Review & Launch"];
+// ─── Step indicator (clean "STEP X OF Y" style) ───
+function StepIndicator({ currentStep, totalSteps, stepLabel }: { currentStep: number; totalSteps: number; stepLabel: string }) {
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {steps.map((label, i) => {
-        const stepNum = i + 1;
-        const isComplete = stepNum < currentStep;
-        const isCurrent = stepNum === currentStep;
-        return (
-          <div key={label} className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                isComplete
-                  ? "bg-[var(--green-500)] text-white"
-                  : isCurrent
-                    ? "bg-[var(--brand-700)] text-white"
-                    : "bg-[var(--brand-100)] text-[var(--brand-700)]"
-              }`}
-            >
-              {isComplete ? <Check className="size-4" /> : stepNum}
-            </div>
-            <span
-              className={`text-sm ${
-                isCurrent ? "font-bold text-[var(--neutral-800)]" : "text-[var(--neutral-500)]"
-              }`}
-            >
-              {label}
-            </span>
-            {i < steps.length - 1 && (
-              <div
-                className={`mx-2 h-px w-12 ${
-                  isComplete ? "bg-[var(--green-500)]" : "bg-[var(--neutral-200)]"
-                }`}
-              />
-            )}
-          </div>
-        );
-      })}
+    <div className="mb-8 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--neutral-400)]">
+          Step {currentStep} of {totalSteps}
+        </p>
+        <div className="h-4 w-px bg-[var(--neutral-200)]" />
+        <p className="text-sm font-bold text-[var(--neutral-800)]">{stepLabel}</p>
+      </div>
+      {/* Progress dots */}
+      <div className="flex items-center gap-1.5">
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div
+            key={i}
+            className="h-2 rounded-full transition-all"
+            style={{
+              width: i + 1 === currentStep ? 24 : 8,
+              backgroundColor: i + 1 <= currentStep ? "var(--brand-700)" : "var(--neutral-200)",
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-// ─── Content format options (Benable Post on top) ───
-const CONTENT_FORMAT_OPTIONS: { value: ContentFormat; label: string; group: string }[] = [
-  { value: "benable_post", label: "Benable Post", group: "Benable" },
-  { value: "instagram_post", label: "Instagram Post", group: "Instagram" },
-  { value: "instagram_reel", label: "Instagram Reel", group: "Instagram" },
-  { value: "instagram_story", label: "Instagram Story", group: "Instagram" },
-  { value: "tiktok_video", label: "TikTok Video", group: "TikTok" },
+// ─── Content format tile config ───
+const CONTENT_FORMAT_TILES: {
+  value: ContentFormat;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  iconBg: string;
+}[] = [
+  { value: "benable_post", label: "Benable Post", icon: Star, color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)", iconBg: "var(--brand-200)" },
+  { value: "instagram_post", label: "Instagram Post", icon: Instagram, color: "#C13584", bgColor: "#FCE7F3", borderColor: "#F472B6", iconBg: "#FBCFE8" },
+  { value: "instagram_reel", label: "Instagram Reel", icon: Video, color: "#C13584", bgColor: "#FCE7F3", borderColor: "#F472B6", iconBg: "#FBCFE8" },
+  { value: "instagram_story", label: "Instagram Story", icon: Camera, color: "#C13584", bgColor: "#FCE7F3", borderColor: "#F472B6", iconBg: "#FBCFE8" },
+  { value: "tiktok_video", label: "TikTok Video", icon: Video, color: "var(--neutral-800)", bgColor: "var(--neutral-100)", borderColor: "var(--neutral-400)", iconBg: "var(--neutral-200)" },
 ];
 
-// ─── Creator type options (Open to all first, then tiers) ───
+// ─── Creator type options ───
 const CREATOR_TYPE_OPTIONS: { value: CreatorType; label: string; desc: string }[] = [
   { value: "any", label: "Open to all", desc: "We'll recommend the best fit across all tiers" },
   { value: "pico", label: "Pico (< 1K)", desc: "Ultra-niche, highly authentic audiences" },
@@ -106,34 +104,148 @@ const CREATOR_TYPE_OPTIONS: { value: CreatorType; label: string; desc: string }[
   { value: "micro", label: "Micro (10K–50K)", desc: "Strong engagement, growing reach" },
 ];
 
-// ═══════════════════════════════════════════════════
-// STEP 1: Campaign Setup (Mode + Basics + Budget & Compensation combined)
-// ═══════════════════════════════════════════════════
-// ─── Compensation pill config ───
-const COMPENSATION_PILLS: {
+// ─── Compensation tile config ───
+const COMPENSATION_TILES: {
   type: CompensationType;
   label: string;
   icon: React.ElementType;
-  color: string;      // icon/text accent
-  bgColor: string;    // pill fill when selected
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  iconBg: string;
+}[] = [
+  { type: "gifted", label: "Gifted Product", icon: Gift, color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)", iconBg: "var(--brand-200)" },
+  { type: "gift_card", label: "Gift Card", icon: CreditCard, color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)", iconBg: "#CCE8FF" },
+  { type: "discount", label: "Discount Code", icon: Tag, color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)", iconBg: "#C6F0E2" },
+  { type: "paid", label: "Paid Fee", icon: DollarSign, color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)", iconBg: "var(--orange-300)" },
+  { type: "commission_boost", label: "Commission Boost", icon: TrendingUp, color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0", iconBg: "#DDD0F7" },
+];
+
+// ─── Campaign Goal tiles (full-page Step 1) ───
+const GOAL_TILES: {
+  value: CampaignGoal;
+  emoji: string;
+  title: string;
+  description: string;
+  color: string;
+  bgColor: string;
   borderColor: string;
 }[] = [
-  { type: "gifted", label: "Gifted Product", icon: Gift, color: "var(--red-700)", bgColor: "var(--red-100)", borderColor: "var(--red-300)" },
-  { type: "gift_card", label: "Gift Card", icon: CreditCard, color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)" },
-  { type: "discount", label: "Discount Code", icon: Tag, color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)" },
-  { type: "paid", label: "Paid Fee", icon: DollarSign, color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)" },
-  { type: "commission_boost", label: "Commission Boost", icon: TrendingUp, color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)" },
+  {
+    value: "word_of_mouth",
+    emoji: "💬",
+    title: "Word of Mouth",
+    description: "Connect with influencers who will share your products with their engaged followers.",
+    color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)",
+  },
+  {
+    value: "product_launch",
+    emoji: "🎁",
+    title: "Product Seeding",
+    description: "Send products to creators for authentic reviews and unboxing content.",
+    color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)",
+  },
+  {
+    value: "ugc",
+    emoji: "📸",
+    title: "Content Creation",
+    description: "Get authentic UGC and branded content for your marketing channels.",
+    color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)",
+  },
+  {
+    value: "awareness",
+    emoji: "📢",
+    title: "Brand Awareness",
+    description: "Increase brand visibility and reach through influencer partnerships.",
+    color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)",
+  },
+  {
+    value: "sales",
+    emoji: "💰",
+    title: "Drive Sales",
+    description: "Generate conversions and revenue through creator-driven promotions.",
+    color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0",
+  },
+  {
+    value: "community",
+    emoji: "🏘️",
+    title: "Community Building",
+    description: "Foster authentic connections between your brand and target audiences.",
+    color: "var(--brand-700)", bgColor: "var(--brand-0)", borderColor: "var(--brand-300)",
+  },
 ];
 
-// ─── Goal chip config ───
-const GOAL_CHIPS: { value: CampaignGoal; label: string; icon: React.ElementType }[] = [
-  { value: "awareness", label: "Brand Awareness", icon: Megaphone },
-  { value: "sales", label: "Drive Sales / Traffic", icon: ShoppingCart },
-  { value: "product_launch", label: "Product Launch", icon: Rocket },
-  { value: "ugc", label: "Content / UGC", icon: Camera },
-];
+// ═══════════════════════════════════════════════════
+// STEP 1: Campaign Goals (full-page, typeform-style)
+// ═══════════════════════════════════════════════════
+function StepGoals({
+  draft,
+  setDraft,
+}: {
+  draft: CampaignDraft;
+  setDraft: React.Dispatch<React.SetStateAction<CampaignDraft>>;
+}) {
+  const toggleGoal = (goal: CampaignGoal) => {
+    setDraft((prev) => ({
+      ...prev,
+      goals: prev.goals.includes(goal)
+        ? prev.goals.filter((g) => g !== goal)
+        : [...prev.goals, goal],
+    }));
+  };
 
-function Step1({
+  return (
+    <div className="mx-auto max-w-2xl py-4">
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
+          What are your campaign goals?
+        </h2>
+        <p className="mt-2 text-sm text-[var(--neutral-500)]">
+          Select all that apply. This helps us tailor the experience for you.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {GOAL_TILES.map((goal) => {
+          const selected = draft.goals.includes(goal.value);
+          return (
+            <button
+              key={goal.value}
+              type="button"
+              onClick={() => toggleGoal(goal.value)}
+              className="relative flex flex-col items-start gap-2 rounded-xl p-5 text-left transition-all"
+              style={{
+                backgroundColor: selected ? goal.bgColor : "white",
+                border: `2px solid ${selected ? goal.borderColor : "var(--neutral-200)"}`,
+              }}
+            >
+              {selected && (
+                <div
+                  className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full"
+                  style={{ backgroundColor: goal.color }}
+                >
+                  <Check className="size-3 text-white" />
+                </div>
+              )}
+              <span className="text-2xl">{goal.emoji}</span>
+              <p className="text-sm font-bold" style={{ color: selected ? goal.color : "var(--neutral-800)" }}>
+                {goal.title}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: selected ? goal.color : "var(--neutral-500)" }}>
+                {goal.description}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 2: Campaign Details (Mode + Basics + Content Format + Compensation)
+// ═══════════════════════════════════════════════════
+function StepDetails({
   draft,
   setDraft,
 }: {
@@ -165,39 +277,29 @@ function Step1({
     }));
   };
 
-  const toggleContentFormat = (format: ContentFormat, checked: boolean) => {
-    setDraft((prev) => ({
-      ...prev,
-      contentFormats: checked
-        ? [...prev.contentFormats, format]
-        : prev.contentFormats.filter((f) => f !== format),
-      platforms: (() => {
-        const newFormats = checked
-          ? [...prev.contentFormats, format]
-          : prev.contentFormats.filter((f) => f !== format);
-        const plats: Set<string> = new Set(["benable"]);
-        newFormats.forEach((f) => {
-          if (f.startsWith("instagram")) plats.add("instagram");
-          if (f.startsWith("tiktok")) plats.add("tiktok");
-        });
-        return Array.from(plats) as CampaignDraft["platforms"];
-      })(),
-    }));
-  };
-
-  const toggleGoal = (goal: CampaignGoal) => {
-    setDraft((prev) => ({
-      ...prev,
-      goals: prev.goals.includes(goal)
-        ? prev.goals.filter((g) => g !== goal)
-        : [...prev.goals, goal],
-    }));
+  const toggleContentFormat = (format: ContentFormat) => {
+    const isBenable = format === "benable_post";
+    if (isBenable) return; // always included
+    setDraft((prev) => {
+      const has = prev.contentFormats.includes(format);
+      const newFormats = has
+        ? prev.contentFormats.filter((f) => f !== format)
+        : [...prev.contentFormats, format];
+      const plats: Set<string> = new Set(["benable"]);
+      newFormats.forEach((f) => {
+        if (f.startsWith("instagram")) plats.add("instagram");
+        if (f.startsWith("tiktok")) plats.add("tiktok");
+      });
+      return {
+        ...prev,
+        contentFormats: newFormats,
+        platforms: Array.from(plats) as CampaignDraft["platforms"],
+      };
+    });
   };
 
   // Deactivated modes
   const deactivatedModes: CampaignMode[] = ["open", "debut"];
-
-  // Get the active compensation configs for expanded detail rendering
   const activeComps = draft.compensationTypes.filter((c) => c.enabled);
 
   return (
@@ -272,14 +374,14 @@ function Step1({
         </div>
       </div>
 
-      {/* Campaign Basics */}
+      {/* Campaign Basics — only show after mode is selected */}
       {draft.mode && (
         <>
           <Separator className="bg-[var(--neutral-200)]" />
 
+          {/* Basic Info */}
           <div className="space-y-5">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Basics</h3>
-
+            <h3 className="text-base font-bold text-[var(--neutral-800)]">Basic Information</h3>
             <div className="space-y-2">
               <Label className="text-sm font-medium text-[var(--neutral-800)]">
                 Campaign Title <span className="text-[var(--red-500)]">*</span>
@@ -291,122 +393,122 @@ function Step1({
                 onChange={(e) => update("title", e.target.value)}
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              {/* Campaign Goal — chip multi-select */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-[var(--neutral-800)]">
-                  Campaign Goal <span className="text-xs font-normal text-[var(--neutral-500)]">(select all that apply)</span>
-                </Label>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {GOAL_CHIPS.map((g) => {
-                    const selected = draft.goals.includes(g.value);
-                    return (
-                      <button
-                        key={g.value}
-                        type="button"
-                        onClick={() => toggleGoal(g.value)}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${
-                          selected
-                            ? "bg-[var(--brand-700)] text-white shadow-sm"
-                            : "border border-[var(--neutral-300)] bg-white text-[var(--neutral-600)] hover:border-[var(--brand-400)] hover:text-[var(--brand-700)]"
-                        }`}
-                      >
-                        <g.icon className="size-3.5" />
-                        {g.label}
-                        {selected && <Check className="size-3" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-[var(--neutral-800)]">
-                  Content Formats <span className="text-[var(--red-500)]">*</span>
-                </Label>
-                <div className="flex flex-col gap-2 pt-1">
-                  {CONTENT_FORMAT_OPTIONS.map((fmt) => {
-                    const isBenable = fmt.value === "benable_post";
-                    const checked = draft.contentFormats.includes(fmt.value);
-                    return (
-                      <div key={fmt.value} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={checked}
-                          disabled={isBenable}
-                          onCheckedChange={(c) => {
-                            if (!isBenable) toggleContentFormat(fmt.value, !!c);
-                          }}
-                          className="data-[state=checked]:bg-[var(--brand-700)] data-[state=checked]:border-[var(--brand-700)]"
-                        />
-                        <span className="text-sm text-[var(--neutral-800)]">{fmt.label}</span>
-                        {isBenable && (
-                          <Badge className="border-0 bg-[var(--brand-100)] text-[var(--brand-700)] text-[10px]">
-                            Always included
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Compensation — pill toggle row */}
+          {/* Content Format — square tiles */}
           <Separator className="bg-[var(--neutral-200)]" />
 
           <div className="space-y-5">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">
-              Compensation
-            </h3>
-            <p className="text-sm text-[var(--neutral-500)]">
-              What will you offer creators? Select all that apply.
-            </p>
+            <div>
+              <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Format</h3>
+              <p className="mt-1 text-sm text-[var(--neutral-500)]">
+                Select the types of content you'd like creators to produce.
+              </p>
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {CONTENT_FORMAT_TILES.map((tile) => {
+                const isBenable = tile.value === "benable_post";
+                const selected = draft.contentFormats.includes(tile.value);
+                return (
+                  <button
+                    key={tile.value}
+                    type="button"
+                    onClick={() => toggleContentFormat(tile.value)}
+                    className="relative flex flex-col items-center gap-2.5 rounded-xl p-4 text-center transition-all"
+                    style={{
+                      backgroundColor: selected ? tile.bgColor : "white",
+                      border: `2px solid ${selected ? tile.borderColor : "var(--neutral-200)"}`,
+                      opacity: isBenable ? 1 : undefined,
+                    }}
+                  >
+                    {selected && (
+                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
+                        <Check className="size-3 text-white" />
+                      </div>
+                    )}
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: tile.iconBg }}
+                    >
+                      <tile.icon className="size-5" style={{ color: tile.color }} />
+                    </div>
+                    <span className="text-xs font-semibold leading-tight" style={{ color: selected ? tile.color : "var(--neutral-700)" }}>
+                      {tile.label}
+                    </span>
+                    {isBenable && (
+                      <Badge className="border-0 bg-[var(--brand-200)] text-[var(--brand-700)] text-[9px] px-1.5 py-0">
+                        Always on
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-            {/* Pill row */}
-            <div className="flex flex-wrap gap-2.5">
-              {COMPENSATION_PILLS.map((pill) => {
-                const comp = draft.compensationTypes.find((c) => c.type === pill.type);
+          {/* Compensation — square tile grid */}
+          <Separator className="bg-[var(--neutral-200)]" />
+
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-base font-bold text-[var(--neutral-800)]">Compensation Structure</h3>
+              <p className="mt-1 text-sm text-[var(--neutral-500)]">
+                What will you offer creators? Select all that apply.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-5 gap-3">
+              {COMPENSATION_TILES.map((tile) => {
+                const comp = draft.compensationTypes.find((c) => c.type === tile.type);
                 const active = comp?.enabled ?? false;
                 return (
                   <button
-                    key={pill.type}
+                    key={tile.type}
                     type="button"
-                    onClick={() => toggleCompensation(pill.type, !active)}
-                    className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all"
+                    onClick={() => toggleCompensation(tile.type, !active)}
+                    className="relative flex flex-col items-center gap-2.5 rounded-xl p-4 text-center transition-all"
                     style={{
-                      backgroundColor: active ? pill.bgColor : "white",
-                      border: `1.5px solid ${active ? pill.borderColor : "var(--neutral-300)"}`,
-                      color: active ? pill.color : "var(--neutral-600)",
+                      backgroundColor: active ? tile.bgColor : "white",
+                      border: `2px solid ${active ? tile.borderColor : "var(--neutral-200)"}`,
                     }}
                   >
-                    <pill.icon className="size-4" />
-                    {pill.label}
-                    {active && <Check className="size-3.5" />}
+                    {active && (
+                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
+                        <Check className="size-3 text-white" />
+                      </div>
+                    )}
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: tile.iconBg }}
+                    >
+                      <tile.icon className="size-5" style={{ color: tile.color }} />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: active ? tile.color : "var(--neutral-700)" }}>
+                      {tile.label}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Expanded detail inputs for selected compensation types */}
+            {/* Expanded detail inputs */}
             {activeComps.length > 0 && (
               <div className="space-y-4">
                 {activeComps.map((comp) => {
-                  const pill = COMPENSATION_PILLS.find((p) => p.type === comp.type)!;
+                  const tile = COMPENSATION_TILES.find((p) => p.type === comp.type)!;
                   return (
                     <div
                       key={comp.type}
                       className="rounded-xl p-4"
                       style={{
-                        backgroundColor: pill.bgColor,
-                        border: `1px solid ${pill.borderColor}`,
+                        backgroundColor: tile.bgColor,
+                        border: `1px solid ${tile.borderColor}`,
                       }}
                     >
                       <div className="flex items-center gap-2 mb-3">
-                        <pill.icon className="size-4" style={{ color: pill.color }} />
-                        <span className="text-sm font-semibold" style={{ color: pill.color }}>
-                          {pill.label}
+                        <tile.icon className="size-4" style={{ color: tile.color }} />
+                        <span className="text-sm font-semibold" style={{ color: tile.color }}>
+                          {tile.label}
                         </span>
                       </div>
 
@@ -497,9 +599,9 @@ function Step1({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 2: Campaign Brief (no creator selection, no budget bar)
+// STEP 3: Campaign Brief
 // ═══════════════════════════════════════════════════
-function Step2({
+function StepBrief({
   draft,
   setDraft,
 }: {
@@ -526,7 +628,7 @@ function Step2({
       <div className="space-y-5">
         <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Brief</h3>
 
-        {/* Upload Brief — ABOVE description */}
+        {/* Upload Brief */}
         <div className="space-y-2">
           <Label className="text-sm font-medium text-[var(--neutral-800)]">
             Upload Brief (optional)
@@ -547,7 +649,7 @@ function Step2({
           </div>
         </div>
 
-        {/* Campaign Description — below upload */}
+        {/* Campaign Description */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium text-[var(--neutral-800)]">
@@ -596,7 +698,6 @@ function Step2({
                   />
                   <span className="text-sm text-[var(--neutral-800)]">{req.label}</span>
                 </div>
-                {/* Inline hashtag input when "use_hashtags" is checked */}
                 {req.value === "use_hashtags" && checked && (
                   <div className="ml-8 mt-2">
                     <Input
@@ -615,7 +716,9 @@ function Step2({
 
       <Separator className="bg-[var(--neutral-200)]" />
 
+      {/* Campaign Timeline */}
       <div className="space-y-5">
+        <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Timeline</h3>
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label className="text-sm font-medium text-[var(--neutral-800)]">
@@ -731,7 +834,7 @@ function Step2({
         </div>
       </div>
 
-      {/* Creator Preferences — type + count (no specific creator selection) */}
+      {/* Creator Preferences */}
       <Separator className="bg-[var(--neutral-200)]" />
 
       <div className="space-y-5">
@@ -758,7 +861,6 @@ function Step2({
                     disabled={isDisabledByAny}
                     onCheckedChange={(c) => {
                       if (isAny) {
-                        // "Open to all" clears specific selections
                         update("creatorTypes", c ? ["any"] : []);
                       } else {
                         const next = c
@@ -824,9 +926,9 @@ function Step2({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 3: Review & Launch
+// STEP 4: Review & Launch
 // ═══════════════════════════════════════════════════
-function Step3({
+function StepReview({
   draft,
   onBack,
 }: {
@@ -835,9 +937,11 @@ function Step3({
 }) {
   const goalLabels: Record<string, string> = {
     awareness: "Brand Awareness",
-    sales: "Drive Sales / Traffic",
-    product_launch: "Product Launch",
-    ugc: "Content / UGC Generation",
+    sales: "Drive Sales",
+    product_launch: "Product Seeding",
+    ugc: "Content Creation",
+    word_of_mouth: "Word of Mouth",
+    community: "Community Building",
   };
 
   const compLabels: Record<CompensationType, string> = {
@@ -867,7 +971,7 @@ function Step3({
 
   return (
     <div className="space-y-6">
-      {/* Campaign title — prominent */}
+      {/* Campaign title */}
       <div className="text-center py-2">
         <p className="text-sm text-[var(--neutral-500)] mb-1">Campaign</p>
         <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
@@ -876,10 +980,10 @@ function Step3({
       </div>
 
       <div className="rounded-xl border border-[var(--neutral-200)] bg-white shadow-light-top">
-        {/* Campaign Setup section */}
+        {/* Goals + Campaign Setup */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Setup</h3>
+            <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Goals & Setup</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -891,17 +995,21 @@ function Step3({
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-[var(--neutral-500)]">Mode</p>
-              <p className="font-medium text-[var(--neutral-800)] capitalize">
-                {draft.mode === "debut" ? "Debut Collabs" : `${draft.mode} Campaign`}
-              </p>
+              <p className="text-[var(--neutral-500)]">Goals</p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {draft.goals.length > 0
+                  ? draft.goals.map((g) => (
+                      <Badge key={g} variant="outline" className="border-[var(--brand-400)] bg-[var(--brand-100)] text-[var(--brand-700)] text-xs">
+                        {goalLabels[g]}
+                      </Badge>
+                    ))
+                  : <span className="text-[var(--neutral-400)]">—</span>}
+              </div>
             </div>
             <div>
-              <p className="text-[var(--neutral-500)]">Goal(s)</p>
-              <p className="font-medium text-[var(--neutral-800)]">
-                {draft.goals.length > 0
-                  ? draft.goals.map((g) => goalLabels[g]).join(", ")
-                  : "—"}
+              <p className="text-[var(--neutral-500)]">Mode</p>
+              <p className="font-medium text-[var(--neutral-800)] capitalize">
+                {draft.mode === "debut" ? "Debut Collabs" : draft.mode ? `${draft.mode} Campaign` : "—"}
               </p>
             </div>
             <div>
@@ -917,20 +1025,6 @@ function Step3({
                   </Badge>
                 ))}
               </div>
-            </div>
-            <div>
-              <p className="text-[var(--neutral-500)]">Budget</p>
-              <p className="font-medium text-[var(--neutral-800)]">
-                {(() => {
-                  const parts: string[] = [];
-                  if (isBudgetActive("spend_cap", draft.budgetType))
-                    parts.push(`$${(draft.budgetCapAmount || 0).toLocaleString()} total spend`);
-                  if (isBudgetActive("product_inventory", draft.budgetType))
-                    parts.push(`${draft.budgetInventoryCount || 0} units (${draft.budgetProductName || "product"})`);
-                  if (draft.budgetType === "flexible") parts.push("Flexible");
-                  return parts.length > 0 ? parts.join(" + ") : "—";
-                })()}
-              </p>
             </div>
           </div>
 
@@ -950,7 +1044,7 @@ function Step3({
                     detail = ` — ${comp.commissionRate}%`;
                   return (
                     <p key={comp.type} className="text-sm text-[var(--neutral-800)]">
-                      • {compLabels[comp.type]}{detail}
+                      {compLabels[comp.type]}{detail}
                     </p>
                   );
                 })}
@@ -969,7 +1063,7 @@ function Step3({
               variant="ghost"
               size="sm"
               className="text-xs text-[var(--brand-700)]"
-              onClick={() => onBack(2)}
+              onClick={() => onBack(3)}
             >
               Edit
             </Button>
@@ -983,7 +1077,7 @@ function Step3({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[var(--neutral-500)]">Flight Dates</p>
+                <p className="text-[var(--neutral-500)]">Timeline</p>
                 <p className="font-medium text-[var(--neutral-800)]">
                   {draft.flightDateStart || "—"} — {draft.flightDateEnd || "—"}
                 </p>
@@ -1014,7 +1108,7 @@ function Step3({
 
         <Separator className="bg-[var(--neutral-200)]" />
 
-        {/* Creator Preferences section */}
+        {/* Creator Preferences */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Preferences</h3>
@@ -1022,7 +1116,7 @@ function Step3({
               variant="ghost"
               size="sm"
               className="text-xs text-[var(--brand-700)]"
-              onClick={() => onBack(2)}
+              onClick={() => onBack(3)}
             >
               Edit
             </Button>
@@ -1057,30 +1151,25 @@ function Step3({
   );
 }
 
-// Helper for budget type checks in review
-function isBudgetActive(type: string, budgetType?: string): boolean {
-  if (!budgetType) return false;
-  if (budgetType === "spend_cap_and_inventory")
-    return type === "spend_cap" || type === "product_inventory";
-  return budgetType === type;
-}
-
 // ═══════════════════════════════════════════════════
 // MAIN CREATE CAMPAIGN PAGE
 // ═══════════════════════════════════════════════════
+const STEP_LABELS = ["Campaign Goals", "Campaign Details", "Campaign Brief", "Review & Launch"];
+
 export default function CreateCampaign() {
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<CampaignDraft>({ ...emptyCampaignDraft });
   const [launched, setLaunched] = useState(false);
   const navigate = useNavigate();
 
-  const goNext = () => setStep((s) => Math.min(s + 1, 3));
+  const totalSteps = 4;
+  const goNext = () => setStep((s) => Math.min(s + 1, totalSteps));
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
   const goToStep = (s: number) => setStep(s);
 
   const handleLaunch = () => {
     setLaunched(true);
-    setTimeout(() => navigate("/campaigns/camp-001"), 2000);
+    setTimeout(() => navigate("/campaigns/camp-001/find-talent"), 2000);
   };
 
   if (launched) {
@@ -1093,28 +1182,48 @@ export default function CreateCampaign() {
           We're finding your creators!
         </h2>
         <p className="mt-2 max-w-md text-center text-sm text-[var(--neutral-500)]">
-          We're matching your campaign with the best creators. You'll receive a curated list shortly. Redirecting to your campaign...
+          We're matching your campaign with the best creators. Taking you to find and select your talent...
         </p>
       </div>
     );
   }
 
+  // Button labels per step
+  const nextLabel = (() => {
+    switch (step) {
+      case 1: return "Next: Campaign Details";
+      case 2: return "Next: Write Your Brief";
+      case 3: return "Review Campaign";
+      default: return "";
+    }
+  })();
+
+  // Can proceed? Step 1 requires at least one goal
+  const canProceed = (() => {
+    if (step === 1) return draft.goals.length > 0;
+    if (step === 2) return !!draft.mode;
+    return true;
+  })();
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
-          Create Campaign
-        </h1>
-        <p className="mt-1 text-sm text-[var(--neutral-600)]">
-          Set up a new creator collaboration campaign.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
+            Create Campaign
+          </h1>
+          <p className="mt-1 text-sm text-[var(--neutral-600)]">
+            Set up a new creator collaboration campaign.
+          </p>
+        </div>
       </div>
 
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={step} totalSteps={totalSteps} stepLabel={STEP_LABELS[step - 1]} />
 
-      {step === 1 && <Step1 draft={draft} setDraft={setDraft} />}
-      {step === 2 && <Step2 draft={draft} setDraft={setDraft} />}
-      {step === 3 && <Step3 draft={draft} onBack={goToStep} />}
+      {step === 1 && <StepGoals draft={draft} setDraft={setDraft} />}
+      {step === 2 && <StepDetails draft={draft} setDraft={setDraft} />}
+      {step === 3 && <StepBrief draft={draft} setDraft={setDraft} />}
+      {step === 4 && <StepReview draft={draft} onBack={goToStep} />}
 
       {/* Navigation buttons */}
       <div className="flex items-center justify-between pt-4 border-t border-[var(--neutral-200)]">
@@ -1130,13 +1239,13 @@ export default function CreateCampaign() {
           <div />
         )}
 
-        {step < 3 ? (
+        {step < totalSteps ? (
           <Button
             className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
             onClick={goNext}
-            disabled={step === 1 && !draft.mode}
+            disabled={!canProceed}
           >
-            {step === 1 ? "Next: Write Your Brief" : "Review Campaign"}
+            {nextLabel}
             <ArrowRight className="size-4" />
           </Button>
         ) : (

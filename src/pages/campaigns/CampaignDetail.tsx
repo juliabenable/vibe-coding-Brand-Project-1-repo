@@ -549,9 +549,11 @@ export default function CampaignDetail() {
 
   const goalLabels: Record<string, string> = {
     awareness: "Brand Awareness",
-    sales: "Drive Sales / Traffic",
-    product_launch: "Product Launch",
-    ugc: "Content / UGC Generation",
+    sales: "Drive Sales",
+    product_launch: "Product Seeding",
+    ugc: "Content Creation",
+    word_of_mouth: "Word of Mouth",
+    community: "Community Building",
   };
 
   const modeLabels: Record<string, string> = {
