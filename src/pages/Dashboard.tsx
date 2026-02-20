@@ -91,35 +91,55 @@ const MOCK_ACTIVITY: ActivityItem[] = [
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
-function campaignStatusBadge(status: Campaign["status"]) {
-  switch (status) {
-    case "active":
-      return { label: "Live", bg: "var(--green-100)", color: "var(--green-700)", border: "var(--green-300)", dot: "var(--green-500)" };
-    case "draft":
-      return { label: "Planning", bg: "var(--blue-100)", color: "var(--blue-700)", border: "var(--blue-300)", dot: "var(--blue-500)" };
-    case "filled":
-      return { label: "Filled", bg: "var(--orange-100)", color: "var(--orange-700)", border: "var(--orange-300)", dot: "var(--orange-500)" };
-    default:
-      return { label: "Completed", bg: "var(--neutral-100)", color: "var(--neutral-600)", border: "var(--neutral-300)", dot: "var(--neutral-400)" };
+function deriveCampaignDisplayStatus(campaign: Campaign): {
+  label: string;
+  bg: string;
+  color: string;
+  border: string;
+  dot: string;
+  actionLabel?: string;
+  actionLink?: string;
+} {
+  const creators = campaign.creators;
+  const hasSubmitted = creators.some((c) => ["content_submitted", "content_approved"].includes(c.status));
+  const hasAccepted = creators.some((c) => ["accepted", "product_shipped", "gift_card_sent", "content_submitted", "content_approved", "posted", "complete"].includes(c.status));
+  const allComplete = creators.length > 0 && creators.every((c) => c.status === "complete" || c.status === "posted");
+
+  if (campaign.status === "completed" || allComplete) {
+    return { label: "Finished", bg: "var(--green-100)", color: "var(--green-700)", border: "var(--green-300)", dot: "var(--green-500)" };
   }
+  if (hasSubmitted) {
+    return { label: "In Review", bg: "var(--orange-100)", color: "var(--orange-700)", border: "var(--orange-300)", dot: "var(--orange-500)" };
+  }
+  if (hasAccepted) {
+    return { label: "In Creation", bg: "var(--brand-100)", color: "var(--brand-700)", border: "var(--brand-200)", dot: "var(--brand-600)" };
+  }
+  if (campaign.status === "filled" || (creators.length > 0 && creators.some((c) => c.status === "recommended"))) {
+    return {
+      label: "Pending Creators",
+      bg: "var(--orange-100)",
+      color: "var(--orange-700)",
+      border: "var(--orange-300)",
+      dot: "var(--orange-500)",
+      actionLabel: "Select Creators",
+      actionLink: `/campaigns/${campaign.id}/find-talent`,
+    };
+  }
+  if (creators.length > 0 && creators.some((c) => c.status === "invited")) {
+    return { label: "Recruiting", bg: "var(--blue-100)", color: "var(--blue-700)", border: "var(--blue-300)", dot: "var(--blue-500)" };
+  }
+  if (campaign.status === "draft") {
+    return { label: "Created", bg: "var(--neutral-100)", color: "var(--neutral-600)", border: "var(--neutral-300)", dot: "var(--neutral-400)" };
+  }
+  return { label: "Active", bg: "var(--green-100)", color: "var(--green-700)", border: "var(--green-300)", dot: "var(--green-500)" };
 }
 
-function deriveCampaignProgress(creators: CreatorAssignment[]): number {
-  if (creators.length === 0) return 10;
-  const statuses = creators.map((c) => c.status);
-  const allComplete = statuses.every((s) => s === "complete");
-  if (allComplete) return 100;
-  const hasContent = statuses.some((s) =>
-    ["content_submitted", "content_approved", "posted", "complete"].includes(s)
-  );
-  if (hasContent) return 70;
-  const hasShipped = statuses.some((s) =>
-    ["product_shipped", "gift_card_sent"].includes(s)
-  );
-  if (hasShipped) return 50;
-  const hasAccepted = statuses.some((s) => s === "accepted");
-  if (hasAccepted) return 35;
-  return 15;
+function getDeliveredCount(campaign: Campaign): { delivered: number; total: number } {
+  const total = campaign.creators.length;
+  const delivered = campaign.creators.filter((c) =>
+    ["content_submitted", "content_approved", "posted", "complete"].includes(c.status)
+  ).length;
+  return { delivered, total };
 }
 
 /* ------------------------------------------------------------------ */
@@ -246,96 +266,104 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {activeCampaigns.map((campaign) => {
-                const statusBadge = campaignStatusBadge(campaign.status);
-                const progress = deriveCampaignProgress(campaign.creators);
+            <Card className="border-[var(--neutral-200)] overflow-hidden">
+              {/* Table header */}
+              <div className="grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-[var(--neutral-100)] bg-[var(--neutral-50)]">
+                <div className="col-span-4 text-[11px] font-semibold text-[var(--neutral-500)] uppercase tracking-wider">Campaign</div>
+                <div className="col-span-2 text-[11px] font-semibold text-[var(--neutral-500)] uppercase tracking-wider">Creators</div>
+                <div className="col-span-2 text-[11px] font-semibold text-[var(--neutral-500)] uppercase tracking-wider">Delivered</div>
+                <div className="col-span-2 text-[11px] font-semibold text-[var(--neutral-500)] uppercase tracking-wider">Timeline</div>
+                <div className="col-span-2 text-[11px] font-semibold text-[var(--neutral-500)] uppercase tracking-wider">Status</div>
+              </div>
 
-                const gradientColors = [
-                  { from: "var(--brand-600)", to: "var(--brand-400)" },
-                  { from: "var(--pink-500)", to: "var(--orange-500)" },
-                  { from: "var(--blue-500)", to: "var(--brand-500)" },
-                  { from: "var(--green-500)", to: "var(--blue-500)" },
-                ];
-                const gradient = gradientColors[activeCampaigns.indexOf(campaign) % gradientColors.length];
+              {/* Table rows */}
+              <div className="divide-y divide-[var(--neutral-100)]">
+                {activeCampaigns.map((campaign) => {
+                  const status = deriveCampaignDisplayStatus(campaign);
+                  const { delivered, total } = getDeliveredCount(campaign);
 
-                return (
-                  <Link
-                    key={campaign.id}
-                    to={`/campaigns/${campaign.id}/find-talent`}
-                    className="block"
-                  >
-                    <Card className="border-[var(--neutral-200)] transition-all hover:border-[var(--brand-400)] hover:shadow-medium-top overflow-hidden">
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2.5">
-                            <Badge
-                              className="shrink-0 border text-[11px] font-semibold uppercase tracking-wide gap-1"
-                              style={{
-                                backgroundColor: statusBadge.bg,
-                                color: statusBadge.color,
-                                borderColor: statusBadge.border,
-                              }}
-                            >
-                              <span className="size-1.5 rounded-full" style={{ backgroundColor: statusBadge.dot }} />
-                              {statusBadge.label}
-                            </Badge>
-                            <p className="font-semibold text-[var(--neutral-800)]">
-                              {campaign.title}
-                            </p>
-                          </div>
-                          <ArrowRight className="mt-0.5 size-4 shrink-0 text-[var(--neutral-400)]" />
+                  return (
+                    <Link
+                      key={campaign.id}
+                      to={`/campaigns/${campaign.id}/find-talent`}
+                      className="grid grid-cols-12 gap-3 px-5 py-3.5 items-center transition-colors hover:bg-[var(--neutral-50)]"
+                    >
+                      {/* Campaign name */}
+                      <div className="col-span-4 flex items-center gap-3">
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white text-xs font-bold"
+                          style={{ backgroundColor: "var(--brand-600)" }}
+                        >
+                          {campaign.title.charAt(0)}
                         </div>
+                        <p className="text-sm font-semibold text-[var(--neutral-800)] truncate">{campaign.title}</p>
+                      </div>
 
-                        <div className="mt-4">
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--neutral-200)]">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{
-                                width: `${progress}%`,
-                                background: `linear-gradient(90deg, ${gradient.from}, ${gradient.to})`,
-                              }}
-                            />
-                          </div>
-                          <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--neutral-400)]">
-                            <span>{progress}% complete</span>
-                            <span>{campaign.creators.length} creator{campaign.creators.length !== 1 ? "s" : ""}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
+                      {/* Creator avatars */}
+                      <div className="col-span-2">
+                        {campaign.creators.length > 0 ? (
                           <CreatorAvatarStack creators={campaign.creators} />
+                        ) : (
+                          <span className="text-xs text-[var(--neutral-400)]">—</span>
+                        )}
+                      </div>
 
-                          <div className="flex items-center gap-4 text-xs text-[var(--neutral-500)]">
-                            {campaign.budgetAllocated > 0 && (
-                              <span className="flex items-center gap-1">
-                                <span className="font-medium">${campaign.budgetAllocated.toLocaleString()}</span>
-                                budget
-                              </span>
-                            )}
-                            <span>
-                              {campaign.flightDateStart
-                                ? new Date(campaign.flightDateStart).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                  })
-                                : ""}{" "}
-                              –{" "}
-                              {campaign.flightDateEnd
-                                ? new Date(campaign.flightDateEnd).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                  })
-                                : ""}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+                      {/* Delivered */}
+                      <div className="col-span-2">
+                        {total > 0 ? (
+                          <span className="text-sm font-medium text-[var(--neutral-800)]">
+                            {delivered}/{total}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[var(--neutral-400)]">—</span>
+                        )}
+                      </div>
+
+                      {/* Timeline */}
+                      <div className="col-span-2">
+                        <span className="text-xs text-[var(--neutral-600)]">
+                          {campaign.flightDateStart
+                            ? new Date(campaign.flightDateStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : "—"}{" "}
+                          –{" "}
+                          {campaign.flightDateEnd
+                            ? new Date(campaign.flightDateEnd).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            : ""}
+                        </span>
+                      </div>
+
+                      {/* Status + Action */}
+                      <div className="col-span-2 flex items-center gap-2">
+                        <Badge
+                          className="shrink-0 border text-[10px] font-semibold gap-1"
+                          style={{
+                            backgroundColor: status.bg,
+                            color: status.color,
+                            borderColor: status.border,
+                          }}
+                        >
+                          <span className="size-1.5 rounded-full" style={{ backgroundColor: status.dot }} />
+                          {status.label}
+                        </Badge>
+                        {status.actionLabel && (
+                          <Button
+                            size="sm"
+                            className="h-6 text-[10px] gap-1 bg-[var(--brand-700)] hover:bg-[var(--brand-800)] text-white px-2"
+                            onClick={(e) => e.stopPropagation()}
+                            asChild
+                          >
+                            <Link to={status.actionLink || "#"}>
+                              <ArrowRight className="size-3" />
+                              {status.actionLabel}
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
           )}
         </div>
 

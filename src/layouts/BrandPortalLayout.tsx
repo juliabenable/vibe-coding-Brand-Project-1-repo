@@ -10,21 +10,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  Megaphone,
   Plus,
   ListChecks,
-  Users,
   Settings,
   Bell,
   TrendingUp,
-  Sparkles,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -36,29 +30,18 @@ const NAV_ITEMS = [
     bgColor: "var(--brand-100)",
   },
   {
-    label: "Campaigns",
+    label: "Create Campaign",
+    path: "/campaigns/create",
+    icon: Plus,
+    color: "var(--brand-600)",
+    bgColor: "var(--brand-100)",
+  },
+  {
+    label: "Active Campaigns",
     path: "/campaigns",
-    icon: Megaphone,
-    color: "var(--orange-500)",
-    bgColor: "var(--orange-100)",
-    children: [
-      { label: "Create Campaign", path: "/campaigns/create", icon: Plus },
-      { label: "Active Campaigns", path: "/campaigns", icon: ListChecks },
-    ],
-  },
-  {
-    label: "Brand Settings",
-    path: "/settings",
-    icon: Settings,
-    color: "var(--neutral-500)",
-    bgColor: "var(--neutral-100)",
-  },
-  {
-    label: "Browse All Creators",
-    path: "/creators",
-    icon: Users,
-    color: "var(--pink-500)",
-    bgColor: "var(--pink-100)",
+    icon: ListChecks,
+    color: "var(--brand-600)",
+    bgColor: "var(--brand-100)",
   },
 ];
 
@@ -72,7 +55,7 @@ export default function BrandPortalLayout() {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="none" className="border-r border-[var(--neutral-200)] bg-gradient-sidebar">
+      <Sidebar collapsible="none" className="border-r border-[var(--neutral-200)] bg-gradient-sidebar w-[220px] shrink-0">
         <SidebarHeader className="px-5 py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-700)]">
@@ -91,119 +74,69 @@ export default function BrandPortalLayout() {
               <SidebarMenu>
                 {NAV_ITEMS.map((item) => (
                   <SidebarMenuItem key={item.path}>
-                    {item.children ? (
-                      <>
-                        <SidebarMenuButton
-                          isActive={isActive(item.path) && location.pathname === item.path}
-                          asChild
-                        >
-                          <NavLink
-                            to={item.path}
-                            className="relative"
-                            style={({ isActive: active }) =>
-                              active
-                                ? {
-                                    backgroundColor: item.bgColor,
-                                    color: item.color,
-                                    fontWeight: 600,
-                                  }
-                                : {}
-                            }
-                          >
-                            {isActive(item.path) && (
-                              <div
-                                className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full"
-                                style={{ backgroundColor: item.color }}
-                              />
-                            )}
-                            <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg"
-                              style={{
-                                backgroundColor: isActive(item.path)
-                                  ? `${item.color}18`
-                                  : "transparent",
-                              }}
-                            >
-                              <item.icon
-                                className="size-4"
-                                style={{
-                                  color: isActive(item.path)
-                                    ? item.color
-                                    : "var(--neutral-500)",
-                                }}
-                              />
-                            </div>
-                            <span>{item.label}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                        <SidebarMenuSub>
-                          {item.children.map((child) => (
-                            <SidebarMenuSubItem key={child.path}>
-                              <SidebarMenuSubButton
-                                isActive={
-                                  child.path === "/campaigns"
-                                    ? location.pathname === "/campaigns"
-                                    : isActive(child.path)
-                                }
-                                asChild
-                              >
-                                <NavLink to={child.path}>
-                                  <child.icon className="size-3.5" />
-                                  <span>{child.label}</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </>
-                    ) : (
-                      <SidebarMenuButton isActive={isActive(item.path)} asChild>
-                        <NavLink
-                          to={item.path}
-                          className="relative"
-                          style={() =>
-                            isActive(item.path)
-                              ? {
-                                  backgroundColor: item.bgColor,
-                                  color: item.color,
-                                  fontWeight: 600,
-                                }
-                              : {}
-                          }
-                        >
-                          {isActive(item.path) && (
-                            <div
-                              className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full"
-                              style={{ backgroundColor: item.color }}
-                            />
-                          )}
+                    <SidebarMenuButton isActive={isActive(item.path)} asChild>
+                      <NavLink
+                        to={item.path}
+                        className="relative"
+                        style={() =>
+                          isActive(item.path)
+                            ? {
+                                backgroundColor: item.bgColor,
+                                color: item.color,
+                                fontWeight: 600,
+                              }
+                            : {}
+                        }
+                      >
+                        {isActive(item.path) && (
                           <div
-                            className="flex h-7 w-7 items-center justify-center rounded-lg"
+                            className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full"
+                            style={{ backgroundColor: item.color }}
+                          />
+                        )}
+                        <div
+                          className="flex h-7 w-7 items-center justify-center rounded-lg"
+                          style={{
+                            backgroundColor: isActive(item.path)
+                              ? `${item.color}18`
+                              : "transparent",
+                          }}
+                        >
+                          <item.icon
+                            className="size-4"
                             style={{
-                              backgroundColor: isActive(item.path)
-                                ? `${item.color}18`
-                                : "transparent",
+                              color: isActive(item.path)
+                                ? item.color
+                                : "var(--neutral-500)",
                             }}
-                          >
-                            <item.icon
-                              className="size-4"
-                              style={{
-                                color: isActive(item.path)
-                                  ? item.color
-                                  : "var(--neutral-500)",
-                              }}
-                            />
-                          </div>
-                          <span>{item.label}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    )}
+                          />
+                        </div>
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
+        {/* Brand Settings — at bottom */}
+        <div className="px-3 pb-2">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                isActive
+                  ? "bg-[var(--neutral-100)] text-[var(--neutral-800)] font-semibold"
+                  : "text-[var(--neutral-500)] hover:bg-[var(--neutral-50)] hover:text-[var(--neutral-800)]"
+              }`
+            }
+          >
+            <Settings className="size-4" />
+            <span>Brand Settings</span>
+          </NavLink>
+        </div>
 
         {/* Upgrade Plan Card — inspired by Benable business dashboard */}
         <NavLink to="/upgrade" className="block px-4 pb-3">
@@ -219,17 +152,16 @@ export default function BrandPortalLayout() {
         </NavLink>
 
         <SidebarFooter className="px-5 py-4 border-t border-[var(--neutral-200)]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-warm text-white">
-              <span className="text-xs font-bold">28</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-[var(--neutral-800)]">28 Litsea</p>
-              <div className="flex items-center gap-1">
-                <Sparkles className="size-3 text-[var(--brand-500)]" />
-                <p className="text-xs text-[var(--brand-500)] font-medium">Free Plan</p>
+          <div>
+            <p className="text-[10px] font-semibold text-[var(--neutral-400)] uppercase tracking-wider mb-1">Current Plan</p>
+            <p className="text-sm font-bold text-[var(--neutral-800)]">Free Plan</p>
+            <div className="mt-2">
+              <div className="h-1.5 w-full rounded-full bg-[var(--neutral-200)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--brand-600)]" style={{ width: "30%" }} />
               </div>
+              <p className="mt-1 text-[10px] text-[var(--neutral-500)]">3/10 Campaigns active</p>
             </div>
+            <p className="mt-2 text-xs font-medium text-[var(--neutral-800)]">28 Litsea</p>
           </div>
         </SidebarFooter>
       </Sidebar>

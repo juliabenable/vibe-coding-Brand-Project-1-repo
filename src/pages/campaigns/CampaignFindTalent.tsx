@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ function StepIndicator({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all"
                 style={{
                   backgroundColor: isComplete
-                    ? "var(--green-500)"
+                    ? "var(--brand-700)"
                     : isCurrent
                       ? "var(--brand-700)"
                       : "var(--neutral-200)",
@@ -103,7 +103,7 @@ function StepIndicator({
                   color: isCurrent
                     ? "var(--brand-700)"
                     : isComplete
-                      ? "var(--green-700)"
+                      ? "var(--brand-700)"
                       : "var(--neutral-400)",
                   fontWeight: isCurrent ? 700 : 500,
                 }}
@@ -115,7 +115,7 @@ function StepIndicator({
               <div
                 className="mx-1 h-0.5 w-10 rounded-full"
                 style={{
-                  backgroundColor: isComplete ? "var(--green-400)" : "var(--neutral-200)",
+                  backgroundColor: isComplete ? "var(--brand-400)" : "var(--neutral-200)",
                 }}
               />
             )}
@@ -281,67 +281,167 @@ const MOCK_DISCOVERABLE_CREATORS: DiscoverableCreator[] = [
 /*  AI MATCHING LOADING SCREEN                                        */
 /* ================================================================== */
 function AIMatchingScreen({ onComplete }: { onComplete: () => void }) {
+  const [activeStage, setActiveStage] = useState(0);
+  const [alertReady, setAlertReady] = useState(false);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setActiveStage(1), 1500),
+      setTimeout(() => setActiveStage(2), 3000),
+      setTimeout(() => { setActiveStage(2); setAlertReady(true); }, 4500),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const stages = [
+    { label: "Requirement Analysis", desc: "Reviewing campaign brief and targeting criteria" },
+    { label: "Expert Talent Sourcing", desc: "Our team is hand-selecting creators for your brand" },
+    { label: "Compliance & Brand Fit Audit", desc: "Verifying creator alignment with brand values" },
+    { label: "Final List Generation", desc: "Compiling your personalized creator shortlist" },
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="max-w-lg w-full text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-0)] border border-[var(--brand-200)] px-4 py-1.5 text-xs font-medium text-[var(--brand-700)] mb-6">
-          <Users className="size-3.5" />
-          HUMAN-VETTED PROCESS
-        </div>
-
-        {/* Checkmark */}
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--green-100)]">
-          <CheckCircle2 className="size-10 text-[var(--green-500)]" />
-        </div>
-
-        <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
-          We're on it!
-        </h2>
-        <p className="mt-2 text-sm text-[var(--neutral-500)] max-w-md mx-auto">
-          Our team is hand-picking the best creators for your campaign.
-          We'll notify you as soon as your matches are ready.
-        </p>
-
-        {/* What to expect card */}
-        <div className="mt-8 rounded-xl border border-[var(--neutral-200)] bg-white p-6 text-left">
-          <h3 className="text-sm font-bold text-[var(--neutral-800)] mb-4">What to expect</h3>
-          <div className="space-y-4">
-            {[
-              { icon: "🔍", title: "Manual Selection", desc: "Our talent team reviews creators who are the best fit for your brand" },
-              { icon: "📧", title: "Email Notification", desc: "You'll receive an email when your creator matches are ready" },
-              { icon: "🔔", title: "In-app Alert", desc: "A notification will appear in your dashboard when it's time to review" },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--neutral-100)] text-base">
-                  {item.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[var(--neutral-800)]">{item.title}</p>
-                  <p className="text-xs text-[var(--neutral-500)]">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+    <div className="min-h-[60vh] flex flex-col items-center justify-center">
+      <div className="w-full max-w-3xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-0)] border border-[var(--brand-200)] px-4 py-1.5 text-xs font-medium text-[var(--brand-700)] mb-4">
+            <Shield className="size-3.5" />
+            HUMAN-VETTED PROCESS
           </div>
+          <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
+            Quality takes time
+          </h2>
+          <p className="mt-2 text-sm text-[var(--neutral-500)] max-w-md mx-auto">
+            We're hand-picking creators who are the perfect fit for your campaign.
+          </p>
         </div>
 
-        {/* Action buttons */}
-        <div className="mt-6 flex flex-col gap-3 items-center">
-          <Button
-            onClick={onComplete}
-            className="gap-2 rounded-xl bg-[var(--brand-700)] px-8 text-white hover:bg-[var(--brand-800)]"
-          >
-            View Creator Matches
-            <ArrowRight className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            className="gap-2 text-[var(--neutral-500)] hover:text-[var(--brand-700)]"
-            onClick={() => window.location.hash = "/"}
-          >
-            <ArrowLeft className="size-4" />
-            Return to Dashboard
-          </Button>
+        <div className="grid grid-cols-5 gap-6">
+          {/* Left: Campaign Status stages */}
+          <div className="col-span-3">
+            <Card className="border-[var(--neutral-200)]">
+              <div className="px-5 py-3 border-b border-[var(--neutral-100)]">
+                <h3 className="text-sm font-bold text-[var(--neutral-800)]">Campaign Status</h3>
+              </div>
+              <CardContent className="p-5">
+                <div className="space-y-4">
+                  {stages.map((stage, i) => {
+                    const isComplete = i < activeStage;
+                    const isCurrent = i === activeStage;
+                    return (
+                      <div key={stage.label} className="flex items-start gap-3">
+                        <div className="mt-0.5">
+                          {isComplete ? (
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--green-500)]">
+                              <Check className="size-3.5 text-white" />
+                            </div>
+                          ) : isCurrent ? (
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--brand-600)]">
+                              <div className="h-2.5 w-2.5 rounded-full bg-[var(--brand-600)] animate-pulse" />
+                            </div>
+                          ) : (
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--neutral-200)]">
+                              <div className="h-2 w-2 rounded-full bg-[var(--neutral-300)]" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${isComplete ? "text-[var(--green-700)]" : isCurrent ? "text-[var(--neutral-800)]" : "text-[var(--neutral-400)]"}`}>
+                            {stage.label}
+                          </p>
+                          <p className={`text-xs mt-0.5 ${isComplete || isCurrent ? "text-[var(--neutral-500)]" : "text-[var(--neutral-300)]"}`}>
+                            {stage.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Feature cards */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {[
+                { icon: Heart, title: "Human Nuance", desc: "Real people review every match" },
+                { icon: Shield, title: "Rigorous Vetting", desc: "Brand safety & compliance checks" },
+                { icon: MessageSquare, title: "Personalized Pitch", desc: "Tailored outreach for each creator" },
+              ].map((feat) => (
+                <div key={feat.title} className="rounded-xl border border-[var(--neutral-200)] p-4 text-center">
+                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-100)]">
+                    <feat.icon className="size-4 text-[var(--brand-700)]" />
+                  </div>
+                  <p className="text-xs font-semibold text-[var(--neutral-800)]">{feat.title}</p>
+                  <p className="text-[10px] text-[var(--neutral-500)] mt-0.5">{feat.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Ready Alert card */}
+          <div className="col-span-2">
+            <Card className="border-[var(--neutral-200)]">
+              <div className="px-5 py-3 border-b border-[var(--neutral-100)]">
+                <h3 className="text-sm font-bold text-[var(--neutral-800)]">Ready Alert</h3>
+              </div>
+              <CardContent className="p-5">
+                <p className="text-xs text-[var(--neutral-500)] mb-4">
+                  We'll notify you when your creator matches are ready for review.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-lg bg-[var(--neutral-50)] border border-[var(--neutral-200)] p-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="size-4 text-[var(--brand-700)]" />
+                      <span className="text-sm text-[var(--neutral-800)]">Email notification</span>
+                    </div>
+                    <div className="h-5 w-9 rounded-full bg-[var(--brand-600)] relative cursor-pointer">
+                      <div className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-[var(--neutral-50)] border border-[var(--neutral-200)] p-3">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="size-4 text-[var(--brand-700)]" />
+                      <span className="text-sm text-[var(--neutral-800)]">SMS notification</span>
+                    </div>
+                    <div className="h-5 w-9 rounded-full bg-[var(--neutral-300)] relative cursor-pointer">
+                      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm" />
+                    </div>
+                  </div>
+                </div>
+
+                {alertReady && (
+                  <div className="mt-4 p-3 rounded-lg bg-[var(--green-100)] border border-[var(--green-300)]">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="size-4 text-[var(--green-600)]" />
+                      <p className="text-sm font-semibold text-[var(--green-700)]">Matches Ready!</p>
+                    </div>
+                    <p className="text-xs text-[var(--green-600)]">Your creator shortlist is ready for review.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* CTA */}
+            <div className="mt-4 space-y-2">
+              <Button
+                onClick={onComplete}
+                className="w-full gap-2 rounded-xl bg-[var(--brand-700)] text-white hover:bg-[var(--brand-800)]"
+                disabled={!alertReady}
+              >
+                View Creator Matches
+                <ArrowRight className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full gap-2 text-[var(--neutral-500)] hover:text-[var(--brand-700)]"
+                onClick={() => window.location.hash = "/"}
+              >
+                <Home className="size-4" />
+                Return to Dashboard
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -877,7 +977,7 @@ function StepCreatorManagement({
   };
 
   /* ------- Creator row ------- */
-  const CreatorRow = ({ mc, isCompleted }: { mc: ManagedCreator; isCompleted?: boolean }) => {
+  const CreatorRow = ({ mc }: { mc: ManagedCreator }) => {
     const statusStyle = INVITE_STATUS_CONFIG[mc.inviteStatus];
     return (
       <div className="flex items-center gap-3 px-5 py-3.5 hover:bg-[var(--neutral-50)] transition-colors">
@@ -922,7 +1022,7 @@ function StepCreatorManagement({
         </div>
 
         {/* Compensation */}
-        <div className="w-32 shrink-0">
+        <div className="w-40 shrink-0">
           <Select value={mc.compensationType} onValueChange={(v) => updateCompType(mc.creator.id, v)}>
             <SelectTrigger className="h-8 text-xs border-[var(--neutral-200)]">
               <SelectValue />
@@ -942,14 +1042,23 @@ function StepCreatorManagement({
 
         {/* Deliverables / Preview */}
         <div className="w-24 shrink-0">
-          {mc.contentSubmission && mc.inviteStatus !== "pending" ? (
+          {mc.contentSubmission && ["content_submitted", "in_review", "revision_requested"].includes(mc.inviteStatus) ? (
             <Button
               variant="outline"
               size="sm"
               className="text-xs gap-1 border-[var(--brand-400)] text-[var(--brand-700)]"
               onClick={() => setReviewCreator(mc)}
             >
-              <Eye className="size-3" /> {isCompleted ? "Preview" : "Review"}
+              <Eye className="size-3" /> Review
+            </Button>
+          ) : mc.contentSubmission && ["awaiting_post", "approved", "posted"].includes(mc.inviteStatus) ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1 border-[var(--neutral-300)] text-[var(--neutral-600)]"
+              onClick={() => setReviewCreator(mc)}
+            >
+              <Eye className="size-3" /> Preview
             </Button>
           ) : (
             <span className="text-xs text-[var(--neutral-400)]">—</span>
@@ -1048,12 +1157,11 @@ function StepCreatorManagement({
   };
 
   /* ------- Section renderer (no white strip at top of banner) ------- */
-  const Section = ({ title, creators: sectionCreators, accentColor, accentBg, isCompletedSection, bulkAction }: {
+  const Section = ({ title, creators: sectionCreators, accentColor, accentBg, bulkAction }: {
     title: string;
     creators: ManagedCreator[];
     accentColor: string;
     accentBg: string;
-    isCompletedSection?: boolean;
     bulkAction?: { label: string; onClick: () => void };
   }) => {
     if (sectionCreators.length === 0) return null;
@@ -1082,7 +1190,7 @@ function StepCreatorManagement({
         </div>
         <div className="divide-y divide-[var(--neutral-100)]">
           {sectionCreators.map((mc) => (
-            <CreatorRow key={mc.creator.id} mc={mc} isCompleted={isCompletedSection} />
+            <CreatorRow key={mc.creator.id} mc={mc} />
           ))}
         </div>
       </Card>
@@ -1207,7 +1315,6 @@ function StepCreatorManagement({
         creators={completed}
         accentColor="var(--green-700)"
         accentBg="var(--green-100)"
-        isCompletedSection
       />
 
       {/* Content Review Dialog — with thread, AI prefill, stays open */}

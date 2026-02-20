@@ -33,7 +33,6 @@ import {
   Zap,
   MessageSquare,
   Heart,
-  Sliders,
 } from "lucide-react";
 import {
   Select,
@@ -881,89 +880,76 @@ function StepBrief({
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Content Niche — reference design: search top, selected below with X, suggestions with + */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Niche</h3>
-          <p className="mt-1 text-sm text-[var(--neutral-500)]">
-            What content categories should creators be in?
-          </p>
-        </div>
+      {/* Content Niche + Creator Count side by side */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Left column: Content Niche */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Niche</h3>
+            <p className="mt-1 text-sm text-[var(--neutral-500)]">
+              What content categories should creators be in?
+            </p>
+          </div>
 
-        {/* Search input at top */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--neutral-400)]" />
-          <Input
-            placeholder="Search or add a niche..."
-            className="border-[var(--neutral-200)] pl-10 text-sm"
-            value={nicheSearch}
-            onChange={(e) => setNicheSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") { e.preventDefault(); addCustomNiche(nicheSearch); }
-            }}
-          />
-        </div>
+          {/* Search input at top */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--neutral-400)]" />
+            <Input
+              placeholder="Search or add a niche..."
+              className="border-[var(--neutral-200)] pl-10 text-sm"
+              value={nicheSearch}
+              onChange={(e) => setNicheSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addCustomNiche(nicheSearch); }
+              }}
+            />
+          </div>
 
-        {/* Selected niches — shown as removable tags */}
-        {draft.contentNiches.length > 0 && (
+          {/* Selected niches — shown as removable tags */}
+          {draft.contentNiches.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {draft.contentNiches.map((niche) => (
+                <Badge
+                  key={niche}
+                  className="cursor-pointer gap-1.5 border-[var(--brand-400)] bg-[var(--brand-100)] text-[var(--brand-700)] px-3 py-1.5 text-sm font-medium hover:bg-[var(--brand-200)]"
+                  onClick={() => toggleNiche(niche)}
+                >
+                  {niche}
+                  <X className="size-3" />
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Suggested tags — with + prefix */}
           <div className="flex flex-wrap gap-2">
-            {draft.contentNiches.map((niche) => (
-              <Badge
-                key={niche}
-                className="cursor-pointer gap-1.5 border-[var(--brand-400)] bg-[var(--brand-100)] text-[var(--brand-700)] px-3 py-1.5 text-sm font-medium hover:bg-[var(--brand-200)]"
-                onClick={() => toggleNiche(niche)}
+            {filteredSuggestions.map((niche) => (
+              <button
+                key={niche.label}
+                type="button"
+                onClick={() => toggleNiche(niche.label)}
+                className="flex items-center gap-1 rounded-full border border-[var(--neutral-200)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--neutral-600)] transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-0)] hover:text-[var(--brand-700)]"
               >
-                {niche}
-                <X className="size-3" />
-              </Badge>
+                <Plus className="size-3" />
+                {niche.label}
+              </button>
             ))}
           </div>
-        )}
-
-        {/* Suggested tags — with + prefix */}
-        <div className="flex flex-wrap gap-2">
-          {filteredSuggestions.map((niche) => (
-            <button
-              key={niche.label}
-              type="button"
-              onClick={() => toggleNiche(niche.label)}
-              className="flex items-center gap-1 rounded-full border border-[var(--neutral-200)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--neutral-600)] transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-0)] hover:text-[var(--brand-700)]"
-            >
-              <Plus className="size-3" />
-              {niche.label}
-            </button>
-          ))}
         </div>
-      </div>
 
-      <Separator className="bg-[var(--neutral-200)]" />
-
-      {/* Creator Count — redesigned, no increment buttons */}
-      <div className="space-y-4">
-        <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Count</h3>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 rounded-xl border border-[var(--neutral-200)] bg-[var(--neutral-50)] p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-100)]">
-              <Sliders className="size-5 text-[var(--brand-700)]" />
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-[var(--neutral-800)]">How many creators?</Label>
-              <p className="text-xs text-[var(--neutral-400)]">We'll recommend the best matches</p>
-            </div>
-          </div>
-          <Select
-            value={String(draft.creatorCount || "")}
-            onValueChange={(v) => update("creatorCount", Number(v))}
-          >
-            <SelectTrigger className="w-36 h-12 text-base font-semibold border-[var(--neutral-200)]">
-              <SelectValue placeholder="Select" />
-            </SelectTrigger>
-            <SelectContent>
-              {[5, 10, 15, 20, 25, 30, 50].map((n) => (
-                <SelectItem key={n} value={String(n)}>{n} creators</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Right column: Creator Count */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Count</h3>
+          <p className="text-sm text-[var(--neutral-500)]">How many creators for this campaign?</p>
+          <Input
+            type="number"
+            min={1}
+            max={100}
+            value={draft.creatorCount || ""}
+            onChange={(e) => update("creatorCount", Number(e.target.value) || 0)}
+            placeholder="e.g. 10"
+            className="w-full h-12 text-lg font-semibold border-[var(--neutral-200)]"
+          />
         </div>
       </div>
     </div>
@@ -971,7 +957,7 @@ function StepBrief({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 4: Review & Launch — less white, more color
+// STEP 4: Review & Launch — redesigned 2-column layout
 // ═══════════════════════════════════════════════════
 function StepReview({
   draft,
@@ -995,22 +981,17 @@ function StepReview({
   const enabledComps = draft.compensationTypes.filter((c) => c.enabled);
   const enabledObligations = draft.creatorObligations.filter((o) => o.enabled);
 
-  // Review card component with subtle bg
-  const ReviewCard = ({
+  const ReviewSection = ({
     title,
     editStep,
-    bgColor,
-    borderColor,
     children,
   }: {
     title: string;
     editStep: number;
-    bgColor: string;
-    borderColor: string;
     children: React.ReactNode;
   }) => (
-    <Card className="overflow-hidden" style={{ borderColor }}>
-      <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: bgColor }}>
+    <Card className="border-[var(--neutral-200)]">
+      <div className="px-5 py-3 flex items-center justify-between border-b border-[var(--neutral-100)]">
         <h3 className="text-sm font-bold text-[var(--neutral-800)]">{title}</h3>
         <Button
           variant="ghost"
@@ -1026,120 +1007,156 @@ function StepReview({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="text-center py-2">
-        <p className="text-sm text-[var(--neutral-500)] mb-1">Ready to launch</p>
+    <div className="space-y-6">
+      <div>
         <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
-          {draft.title || "Untitled Campaign"}
+          Review & Launch
         </h2>
+        <p className="mt-1 text-sm text-[var(--neutral-500)]">
+          Double-check everything before finding your creators.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <ReviewCard title="🎯 Campaign Goals" editStep={1} bgColor="var(--brand-0)" borderColor="var(--brand-200)">
-          <div className="flex flex-wrap gap-1.5">
-            {draft.goals.length > 0
-              ? draft.goals.map((g) => (
-                  <Badge key={g} variant="outline" className="border-[var(--brand-400)] bg-[var(--brand-100)] text-[var(--brand-700)] text-xs">
-                    {goalLabels[g]}
-                  </Badge>
-                ))
-              : <span className="text-sm text-[var(--neutral-400)]">No goals selected</span>}
-          </div>
-        </ReviewCard>
-
-        <ReviewCard title="⚙️ Campaign Setup" editStep={2} bgColor="var(--blue-100)" borderColor="var(--blue-200)">
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="text-[var(--neutral-500)] text-xs">Mode</p>
-              <p className="font-medium text-[var(--neutral-800)] capitalize">
-                {draft.mode === "debut" ? "Debut Collabs" : draft.mode ? `${draft.mode} Campaign` : "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[var(--neutral-500)] text-xs">Content Formats</p>
-              <div className="flex gap-1.5 mt-1 flex-wrap">
-                {draft.contentFormats.map((f) => (
-                  <Badge key={f} variant="outline" className="border-[var(--neutral-200)] text-[10px]">
-                    {formatLabel[f]}
-                  </Badge>
-                ))}
+      <div className="grid grid-cols-5 gap-5">
+        {/* Left column — 3/5 */}
+        <div className="col-span-3 space-y-5">
+          <ReviewSection title="Campaign Overview" editStep={1}>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-[var(--neutral-500)] mb-1">Campaign Name</p>
+                <p className="text-sm font-semibold text-[var(--neutral-800)]">{draft.title || "Untitled Campaign"}</p>
               </div>
-            </div>
-          </div>
-        </ReviewCard>
-
-        {enabledComps.length > 0 && (
-          <ReviewCard title="💰 Compensation" editStep={2} bgColor="var(--green-100)" borderColor="var(--green-200)">
-            <div className="space-y-3">
-              {enabledComps.map((comp) => {
-                const tile = COMPENSATION_TILES.find((t) => t.type === comp.type);
-                if (!tile) return null;
-                let detail = "";
-                if (comp.type === "gifted" && comp.productName) detail = `${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
-                if (comp.type === "gift_card" && comp.giftCardValue) detail = `$${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
-                if (comp.type === "paid" && comp.feeMin) detail = `$${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
-                if (comp.type === "commission_boost" && comp.commissionRate) detail = `${comp.commissionRate}%`;
-                return (
-                  <div key={comp.type} className="flex items-center gap-3 rounded-lg p-2.5" style={{ backgroundColor: `${tile.color}10` }}>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor: tile.bgColor }}>
-                      <tile.icon className="size-4" style={{ color: tile.color }} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold" style={{ color: tile.color }}>{tile.label}</p>
-                      {detail && <p className="text-xs text-[var(--neutral-600)]">{detail}</p>}
-                    </div>
+              <div>
+                <p className="text-xs text-[var(--neutral-500)] mb-1">Description</p>
+                <p className="text-sm text-[var(--neutral-700)] leading-relaxed">{draft.description || "No description provided."}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs text-[var(--neutral-500)] mb-1">Mode</p>
+                  <p className="text-sm font-medium text-[var(--neutral-800)] capitalize">
+                    {draft.mode === "debut" ? "Debut Collabs" : draft.mode ? `${draft.mode}` : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--neutral-500)] mb-1">Platforms</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {draft.contentFormats.length > 0 ? (
+                      [...new Set(draft.contentFormats.map((f) => f.startsWith("instagram") ? "Instagram" : f.startsWith("tiktok") ? "TikTok" : "Benable"))].map((p) => (
+                        <Badge key={p} variant="outline" className="border-[var(--neutral-200)] text-[10px]">{p}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-[var(--neutral-400)]">—</span>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </ReviewCard>
-        )}
-
-        <ReviewCard title="📝 Campaign Brief" editStep={3} bgColor="var(--orange-100)" borderColor="var(--orange-200)">
-          <p className="text-sm text-[var(--neutral-800)] line-clamp-4">
-            {draft.description || "No description provided."}
-          </p>
-        </ReviewCard>
-
-        <ReviewCard title="📋 Creator Obligations" editStep={3} bgColor="#F3EEFF" borderColor="#C9B8F0">
-          {enabledObligations.length > 0 || draft.customObligations.length > 0 ? (
-            <div className="space-y-1.5">
-              {enabledObligations.map((o) => (
-                <div key={o.id} className="flex items-center gap-2 text-sm">
-                  <Check className="size-3.5 text-[var(--green-700)]" />
-                  <span className="text-[var(--neutral-700)]">{o.label}</span>
                 </div>
-              ))}
-              {draft.customObligations.map((co, idx) => (
-                <div key={`custom-${idx}`} className="flex items-center gap-2 text-sm">
-                  <Check className="size-3.5 text-[var(--green-700)]" />
-                  <span className="text-[var(--neutral-700)]">{co}</span>
+                <div>
+                  <p className="text-xs text-[var(--neutral-500)] mb-1">Content Formats</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {draft.contentFormats.map((f) => (
+                      <Badge key={f} variant="outline" className="border-[var(--neutral-200)] text-[10px]">{formatLabel[f]}</Badge>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--neutral-400)]">No obligations set</p>
-          )}
-        </ReviewCard>
-
-        <ReviewCard title="🎨 Content Niche & Creators" editStep={3} bgColor="var(--neutral-100)" borderColor="var(--neutral-200)">
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="text-[var(--neutral-500)] text-xs">Niches</p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {draft.contentNiches.length > 0
-                  ? draft.contentNiches.map((n) => (
-                      <Badge key={n} variant="outline" className="border-[var(--neutral-200)] text-[10px]">{n}</Badge>
-                    ))
-                  : <span className="text-[var(--neutral-400)]">—</span>}
               </div>
             </div>
-            <div>
-              <p className="text-[var(--neutral-500)] text-xs">Number of Creators</p>
-              <p className="font-medium text-[var(--neutral-800)]">{draft.creatorCount || "—"}</p>
+          </ReviewSection>
+
+          <ReviewSection title="Influencer Criteria" editStep={3}>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-[var(--neutral-500)] mb-1">Content Niches</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {draft.contentNiches.length > 0
+                    ? draft.contentNiches.map((n) => (
+                        <Badge key={n} className="bg-[var(--brand-100)] text-[var(--brand-700)] border-0 text-xs">{n}</Badge>
+                      ))
+                    : <span className="text-sm text-[var(--neutral-400)]">No niches selected</span>}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-[var(--neutral-500)] mb-1">Number of Creators</p>
+                <p className="text-sm font-semibold text-[var(--neutral-800)]">{draft.creatorCount || "—"}</p>
+              </div>
+              {(enabledObligations.length > 0 || draft.customObligations.length > 0) && (
+                <div>
+                  <p className="text-xs text-[var(--neutral-500)] mb-2">Creator Obligations</p>
+                  <div className="space-y-1.5">
+                    {enabledObligations.map((o) => (
+                      <div key={o.id} className="flex items-center gap-2 text-sm">
+                        <Check className="size-3.5 text-[var(--green-700)]" />
+                        <span className="text-[var(--neutral-700)]">{o.label}</span>
+                      </div>
+                    ))}
+                    {draft.customObligations.map((co, idx) => (
+                      <div key={`custom-${idx}`} className="flex items-center gap-2 text-sm">
+                        <Check className="size-3.5 text-[var(--green-700)]" />
+                        <span className="text-[var(--neutral-700)]">{co}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          </ReviewSection>
+        </div>
+
+        {/* Right column — 2/5 */}
+        <div className="col-span-2 space-y-5">
+          <ReviewSection title="Goals" editStep={1}>
+            <div className="space-y-2">
+              {draft.goals.length > 0
+                ? draft.goals.map((g) => (
+                    <div key={g} className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-[var(--brand-600)]" />
+                      <span className="text-sm text-[var(--neutral-800)]">{goalLabels[g]}</span>
+                    </div>
+                  ))
+                : <span className="text-sm text-[var(--neutral-400)]">No goals selected</span>}
+            </div>
+          </ReviewSection>
+
+          <ReviewSection title="Payout" editStep={2}>
+            {enabledComps.length > 0 ? (
+              <div className="space-y-3">
+                {enabledComps.map((comp) => {
+                  const tile = COMPENSATION_TILES.find((t) => t.type === comp.type);
+                  if (!tile) return null;
+                  let detail = "";
+                  if (comp.type === "gifted" && comp.productName) detail = `${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
+                  if (comp.type === "gift_card" && comp.giftCardValue) detail = `$${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
+                  if (comp.type === "paid" && comp.feeMin) detail = `$${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
+                  if (comp.type === "commission_boost" && comp.commissionRate) detail = `${comp.commissionRate}%`;
+                  return (
+                    <div key={comp.type} className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0" style={{ backgroundColor: tile.bgColor }}>
+                        <tile.icon className="size-4" style={{ color: tile.color }} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--neutral-800)]">{tile.label}</p>
+                        {detail && <p className="text-xs text-[var(--neutral-500)]">{detail}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="text-sm text-[var(--neutral-400)]">No compensation set</span>
+            )}
+          </ReviewSection>
+        </div>
+      </div>
+
+      {/* Just one more thing banner */}
+      <div className="rounded-xl border border-[var(--yellow-300,#fde68a)] bg-[var(--yellow-100,#fef9c3)] p-5">
+        <div className="flex items-start gap-3">
+          <span className="text-xl">💡</span>
+          <div>
+            <p className="text-sm font-bold text-[var(--neutral-800)]">Just one more thing!</p>
+            <p className="mt-1 text-sm text-[var(--neutral-600)]">
+              Once you launch, Benable will start finding creators that match your campaign. You'll be notified when matches are ready for your review.
+            </p>
           </div>
-        </ReviewCard>
+        </div>
       </div>
     </div>
   );
