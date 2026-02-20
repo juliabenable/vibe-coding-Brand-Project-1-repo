@@ -50,26 +50,43 @@ import {
   type ContentFormat,
 } from "@/store/campaign-store";
 
-// ─── Step indicator (clean "STEP X OF Y" style) ───
+// ─── Step indicator (colorful gradient style) ───
 function StepIndicator({ currentStep, totalSteps, stepLabel }: { currentStep: number; totalSteps: number; stepLabel: string }) {
+  const stepColors = [
+    { color: "var(--brand-600)", bg: "var(--brand-100)" },
+    { color: "var(--orange-500)", bg: "var(--orange-100)" },
+    { color: "var(--pink-500)", bg: "var(--pink-100)" },
+    { color: "var(--green-500)", bg: "var(--green-100)" },
+  ];
+  const current = stepColors[(currentStep - 1) % stepColors.length];
+
   return (
     <div className="mb-8 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--neutral-400)]">
-          Step {currentStep} of {totalSteps}
-        </p>
-        <div className="h-4 w-px bg-[var(--neutral-200)]" />
-        <p className="text-sm font-bold text-[var(--neutral-800)]">{stepLabel}</p>
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
+          style={{ background: `linear-gradient(135deg, ${current.color}, var(--brand-400))` }}
+        >
+          {currentStep}
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--neutral-400)]">
+            Step {currentStep} of {totalSteps}
+          </p>
+          <p className="text-sm font-bold text-[var(--neutral-800)]">{stepLabel}</p>
+        </div>
       </div>
-      {/* Progress dots */}
+      {/* Progress bar with gradient */}
       <div className="flex items-center gap-1.5">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div
             key={i}
             className="h-2 rounded-full transition-all"
             style={{
-              width: i + 1 === currentStep ? 24 : 8,
-              backgroundColor: i + 1 <= currentStep ? "var(--brand-700)" : "var(--neutral-200)",
+              width: i + 1 === currentStep ? 28 : 8,
+              background: i + 1 <= currentStep
+                ? `linear-gradient(90deg, var(--brand-600), var(--brand-400))`
+                : "var(--neutral-200)",
             }}
           />
         ))}
@@ -1203,13 +1220,12 @@ function AIMatchingScreen() {
       {/* Animated brand circle */}
       <div className="relative mb-8">
         <div
-          className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--brand-100)]"
+          className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-brand shadow-brand-glow"
           style={{
             animation: "pulse 2s ease-in-out infinite",
-            boxShadow: "0 0 0 12px var(--brand-0), 0 0 0 24px rgba(174, 148, 249, 0.1)",
           }}
         >
-          <Sparkles className="size-10 text-[var(--brand-700)]" />
+          <Sparkles className="size-10 text-white" />
         </div>
       </div>
 
@@ -1222,12 +1238,12 @@ function AIMatchingScreen() {
 
       {/* Progress bar */}
       <div className="w-full max-w-md mb-8">
-        <div className="h-2 w-full rounded-full bg-[var(--neutral-100)] overflow-hidden">
+        <div className="h-2.5 w-full rounded-full bg-[var(--neutral-100)] overflow-hidden">
           <div
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(progress, 100)}%`,
-              backgroundColor: "var(--brand-700)",
+              background: "linear-gradient(90deg, var(--brand-600), var(--pink-500), var(--orange-500))",
               transition: "width 0.15s linear",
             }}
           />
@@ -1288,16 +1304,16 @@ function AIMatchingScreen() {
       {/* Feature cards */}
       <div className="grid w-full max-w-lg grid-cols-3 gap-3">
         {[
-          { icon: Eye, title: "Brand Match", desc: "Creators aligned with your aesthetic" },
-          { icon: Shield, title: "Quality Check", desc: "Verified authentic engagement" },
-          { icon: Zap, title: "ROI Prediction", desc: "Estimated campaign performance" },
+          { icon: Eye, title: "Brand Match", desc: "Creators aligned with your aesthetic", color: "var(--brand-700)", bg: "var(--brand-100)" },
+          { icon: Shield, title: "Quality Check", desc: "Verified authentic engagement", color: "var(--green-600)", bg: "var(--green-100)" },
+          { icon: Zap, title: "ROI Prediction", desc: "Estimated campaign performance", color: "var(--orange-500)", bg: "var(--orange-100)" },
         ].map((card, idx) => (
           <div
             key={idx}
-            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--neutral-200)] bg-white p-4 text-center"
+            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--neutral-200)] bg-white p-4 text-center hover:shadow-medium-top transition-shadow"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-100)]">
-              <card.icon className="size-4 text-[var(--brand-700)]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: card.bg }}>
+              <card.icon className="size-5" style={{ color: card.color }} />
             </div>
             <p className="text-xs font-semibold text-[var(--neutral-800)]">{card.title}</p>
             <p className="text-[10px] text-[var(--neutral-500)]">{card.desc}</p>
@@ -1359,13 +1375,18 @@ export default function CreateCampaign() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
-            Create Campaign
-          </h1>
-          <p className="mt-1 text-sm text-[var(--neutral-600)]">
-            Set up a new creator collaboration campaign.
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand shadow-brand-glow">
+            <Sparkles className="size-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
+              Create Campaign
+            </h1>
+            <p className="mt-1 text-sm text-[var(--neutral-500)]">
+              Set up a new creator collaboration campaign.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1392,7 +1413,7 @@ export default function CreateCampaign() {
 
         {step < totalSteps ? (
           <Button
-            className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
+            className="gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90 transition-opacity"
             onClick={goNext}
             disabled={!canProceed}
           >
@@ -1401,7 +1422,7 @@ export default function CreateCampaign() {
           </Button>
         ) : (
           <Button
-            className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]"
+            className="gap-2 rounded-xl bg-gradient-warm shadow-brand-glow hover:opacity-90 transition-opacity"
             onClick={handleLaunch}
           >
             <Sparkles className="size-4" /> Launch & Find Creators

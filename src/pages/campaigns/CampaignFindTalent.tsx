@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
+
 import {
   Dialog,
   DialogContent,
@@ -274,7 +274,7 @@ function StepGoals({ selected, onToggle, onNext }: {
 
         <div className="mt-6 flex justify-center">
           <Button
-            className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)] px-8"
+            className="gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90 transition-opacity px-8"
             size="lg"
             onClick={onNext}
             disabled={selected.length === 0}
@@ -322,8 +322,8 @@ function AIMatchingScreen({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <div className="max-w-md w-full text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--brand-100)]">
-          <Brain className="size-10 text-[var(--brand-700)] animate-pulse" />
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-brand shadow-brand-glow">
+          <Brain className="size-10 text-white animate-pulse" />
         </div>
         <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
           Benable AI is finding your perfect creators
@@ -332,8 +332,16 @@ function AIMatchingScreen({ onComplete }: { onComplete: () => void }) {
           Our proprietary matching engine analyzes thousands of data points
         </p>
         <div className="mt-8">
-          <Progress value={progress} className="h-2" />
-          <p className="mt-3 text-sm font-medium text-[var(--brand-700)]">
+          <div className="h-2.5 w-full rounded-full bg-[var(--neutral-100)] overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${progress}%`,
+                background: "linear-gradient(90deg, var(--brand-600), var(--pink-500), var(--orange-500))",
+              }}
+            />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-[var(--brand-700)]">
             {steps[step]}
           </p>
         </div>
@@ -654,7 +662,7 @@ function StepCreatorSelection({
         <Button variant="outline" className="gap-2 border-[var(--neutral-200)]" onClick={onBack}>
           <ArrowLeft className="size-4" /> Back
         </Button>
-        <Button className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]" onClick={onNext} disabled={selected.size === 0}>
+        <Button className="gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90 transition-opacity" onClick={onNext} disabled={selected.size === 0}>
           Continue with {selected.size} Creator{selected.size !== 1 ? "s" : ""} <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -1023,7 +1031,7 @@ function StepCreatorManagement({
         <Button variant="outline" className="gap-2 border-[var(--neutral-200)]" onClick={onBack}>
           <ArrowLeft className="size-4" /> Back
         </Button>
-        <Button className="gap-2 bg-[var(--brand-700)] hover:bg-[var(--brand-800)]" onClick={onLaunch}>
+        <Button className="gap-2 rounded-xl bg-gradient-warm shadow-brand-glow hover:opacity-90 transition-opacity" onClick={onLaunch}>
           <Zap className="size-4" /> Launch Campaign
         </Button>
       </div>
@@ -1114,10 +1122,10 @@ export default function CampaignFindTalent() {
   if (launched) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--green-100)]">
-          <CheckCircle2 className="size-8 text-[var(--green-500)]" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-success shadow-lg">
+          <CheckCircle2 className="size-10 text-white" />
         </div>
-        <h2 className="mt-6 text-2xl font-bold text-[var(--neutral-800)]">Campaign Launched!</h2>
+        <h2 className="mt-6 text-2xl font-bold text-[var(--neutral-800)]">Campaign Launched! 🎉</h2>
         <p className="mt-2 max-w-md text-center text-sm text-[var(--neutral-500)]">
           Your invitations are being sent to creators. You'll be notified as they respond. Redirecting...
         </p>
@@ -1127,22 +1135,44 @@ export default function CampaignFindTalent() {
 
   return (
     <div className="space-y-6">
-      {/* Progress bar */}
+      {/* Progress bar — colorful step indicator */}
       <div className="flex items-center gap-2 text-xs text-[var(--neutral-500)]">
-        {["Set Goals", "Find Creators", "Select", "Manage & Launch"].map((label, i) => {
+        {[
+          { label: "Set Goals", color: "var(--brand-600)" },
+          { label: "Find Creators", color: "var(--pink-500)" },
+          { label: "Select", color: "var(--orange-500)" },
+          { label: "Manage & Launch", color: "var(--green-600)" },
+        ].map((item, i) => {
           const steps = ["goals", "ai_matching", "select_creators", "manage"];
           const currentIdx = steps.indexOf(flowStep);
           const isComplete = i < currentIdx;
           const isCurrent = i === currentIdx;
           return (
-            <div key={label} className="flex items-center gap-2">
-              <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium ${
-                isComplete ? "bg-[var(--green-500)] text-white" : isCurrent ? "bg-[var(--brand-700)] text-white" : "bg-[var(--neutral-200)] text-[var(--neutral-500)]"
-              }`}>
+            <div key={item.label} className="flex items-center gap-2">
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-bold transition-all"
+                style={{
+                  background: isComplete
+                    ? "linear-gradient(135deg, var(--green-500), var(--green-600))"
+                    : isCurrent
+                      ? `linear-gradient(135deg, ${item.color}, var(--brand-400))`
+                      : "var(--neutral-200)",
+                  color: isComplete || isCurrent ? "white" : "var(--neutral-500)",
+                }}
+              >
                 {isComplete ? <Check className="size-3" /> : i + 1}
               </div>
-              <span className={isCurrent ? "font-semibold text-[var(--neutral-800)]" : ""}>{label}</span>
-              {i < 3 && <div className={`mx-1 h-px w-8 ${isComplete ? "bg-[var(--green-500)]" : "bg-[var(--neutral-200)]"}`} />}
+              <span className={isCurrent ? "font-semibold text-[var(--neutral-800)]" : ""}>{item.label}</span>
+              {i < 3 && (
+                <div
+                  className="mx-1 h-0.5 w-8 rounded-full"
+                  style={{
+                    background: isComplete
+                      ? "linear-gradient(90deg, var(--green-500), var(--green-300))"
+                      : "var(--neutral-200)",
+                  }}
+                />
+              )}
             </div>
           );
         })}

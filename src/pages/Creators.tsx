@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Star, ExternalLink, TrendingUp, Heart, MapPin } from "lucide-react";
+import { Search, Filter, Star, ExternalLink, TrendingUp, Heart, MapPin, Users } from "lucide-react";
 import { MOCK_CAMPAIGNS } from "@/store/campaign-store";
 import type { CreatorAssignment, Platform } from "@/store/campaign-store";
 import { formatFollowers } from "@/lib/format";
@@ -35,6 +35,12 @@ const platformLabel: Record<Platform, string> = {
   tiktok: "TikTok",
 };
 
+const platformColors: Record<Platform, { color: string; bg: string }> = {
+  benable: { color: "var(--brand-700)", bg: "var(--brand-100)" },
+  instagram: { color: "#C13584", bg: "#FCE7F3" },
+  tiktok: { color: "var(--neutral-700)", bg: "var(--neutral-100)" },
+};
+
 export default function Creators() {
   const [searchQuery, setSearchQuery] = useState("");
   const creators = getUniqueCreators();
@@ -47,11 +53,16 @@ export default function Creators() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">Creators</h1>
-        <p className="mt-1 text-sm text-[var(--neutral-600)]">
-          Creators you've worked with or been matched with across campaigns.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--pink-100)]">
+          <Users className="size-6 text-[var(--pink-500)]" />
+        </div>
+        <div>
+          <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">Creators</h1>
+          <p className="text-sm text-[var(--neutral-500)]">
+            Creators you've worked with or been matched with across campaigns.
+          </p>
+        </div>
       </div>
 
       {/* Search & filter */}
@@ -60,12 +71,12 @@ export default function Creators() {
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--neutral-400)]" />
           <Input
             placeholder="Search creators by name or handle..."
-            className="border-[var(--neutral-200)] pl-9"
+            className="border-[var(--neutral-200)] pl-9 rounded-xl"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="gap-2 border-[var(--neutral-200)]">
+        <Button variant="outline" className="gap-2 border-[var(--neutral-200)] rounded-xl">
           <Filter className="size-4" /> Filter
         </Button>
       </div>
@@ -75,23 +86,23 @@ export default function Creators() {
         {filtered.map((creator) => (
           <Card
             key={creator.creatorId}
-            className="shadow-light-top border-[var(--neutral-200)] transition-shadow hover:shadow-medium-top"
+            className="border-[var(--neutral-200)] transition-all hover:border-[var(--brand-400)] hover:shadow-medium-top overflow-hidden"
           >
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
                 <img
                   src={creator.creatorAvatar}
                   alt={creator.creatorName}
-                  className="h-12 w-12 rounded-full object-cover ring-2 ring-[var(--neutral-100)]"
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-[var(--brand-100)]"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-[var(--neutral-800)] truncate">
+                    <p className="font-semibold text-[var(--neutral-800)] truncate">
                       {creator.creatorName}
                     </p>
                     {creator.isExclusive && (
-                      <Badge className="border-0 bg-[var(--brand-100)] text-[var(--brand-700)] text-[10px] font-medium shrink-0">
-                        <Star className="mr-0.5 size-2.5" /> Exclusive
+                      <Badge className="border-0 bg-gradient-brand text-white text-[10px] font-medium shrink-0 gap-0.5">
+                        <Star className="size-2.5" /> Exclusive
                       </Badge>
                     )}
                   </div>
@@ -106,15 +117,18 @@ export default function Creators() {
                 {creator.bio}
               </p>
 
-              {/* Stats row */}
-              <div className="mt-3 flex items-center gap-4 text-xs text-[var(--neutral-600)]">
-                <span className="font-medium">{formatFollowers(creator.followerCount)} followers</span>
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="size-3 text-[var(--green-500)]" />
+              {/* Stats row — colorful */}
+              <div className="mt-3 flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1 font-medium text-[var(--brand-700)]">
+                  <Users className="size-3" />
+                  {formatFollowers(creator.followerCount)}
+                </span>
+                <span className="flex items-center gap-1 text-[var(--green-600)]">
+                  <TrendingUp className="size-3" />
                   {creator.engagementRate}% ER
                 </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="size-3 text-[var(--red-400)]" />
+                <span className="flex items-center gap-1 text-[var(--pink-500)]">
+                  <Heart className="size-3" />
                   {creator.avgLikes} avg
                 </span>
               </div>
@@ -131,15 +145,18 @@ export default function Creators() {
 
               {/* Platform & category tags */}
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {creator.platforms.map((p) => (
-                  <Badge
-                    key={p}
-                    variant="outline"
-                    className="border-[var(--neutral-200)] text-[10px] font-normal text-[var(--neutral-600)]"
-                  >
-                    {platformLabel[p]}
-                  </Badge>
-                ))}
+                {creator.platforms.map((p) => {
+                  const pColor = platformColors[p];
+                  return (
+                    <Badge
+                      key={p}
+                      className="border-0 text-[10px] font-medium"
+                      style={{ backgroundColor: pColor.bg, color: pColor.color }}
+                    >
+                      {platformLabel[p]}
+                    </Badge>
+                  );
+                })}
                 {creator.categories.map((cat) => (
                   <Badge
                     key={cat}
@@ -159,13 +176,13 @@ export default function Creators() {
                       key={i}
                       src={thumb}
                       alt="Recent post"
-                      className="h-14 w-14 rounded-md object-cover"
+                      className="h-14 w-14 rounded-lg object-cover border border-[var(--neutral-200)]"
                     />
                   ))}
                 </div>
               )}
 
-              {/* Actions — secondary first, primary second */}
+              {/* Actions */}
               <div className="mt-4 flex items-center justify-between border-t border-[var(--neutral-100)] pt-3">
                 <p className="text-xs text-[var(--neutral-500)]">
                   {creator.campaignCount} campaign{creator.campaignCount > 1 ? "s" : ""}
@@ -180,9 +197,8 @@ export default function Creators() {
                     <ExternalLink className="mr-1 size-3" /> Profile
                   </Button>
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="h-7 text-xs border-[var(--brand-700)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
+                    className="h-7 text-xs rounded-lg bg-gradient-brand text-white hover:opacity-90"
                   >
                     Invite to Campaign
                   </Button>
@@ -194,7 +210,10 @@ export default function Creators() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-100)] py-16">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--brand-300)] bg-gradient-hero py-16">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--pink-100)] mb-3">
+            <Users className="size-7 text-[var(--pink-500)]" />
+          </div>
           <p className="text-sm text-[var(--neutral-500)]">
             {searchQuery ? "No creators found matching your search." : "No creators yet. Launch a campaign to start connecting!"}
           </p>

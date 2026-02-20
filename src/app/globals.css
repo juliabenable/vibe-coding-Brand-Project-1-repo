@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Enter", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -49,82 +49,95 @@
 :root {
   --radius: 0.75rem;
 
-  /* Benable Brand Tokens */
-  --brand-0: #F9F7FF;
-  --brand-100: #F5F3FC;
-  --brand-200: #EFECF7;
-  --brand-300: #EBE4FF;
-  --brand-400: #D6CFEA;
-  --brand-500: #BFB9D2;
-  --brand-600: #A19BB8;
-  --brand-700: #AE94F9;
-  --brand-800: #896BD9;
-  --brand-900: #5E518E;
+  /* ═══ Benable Brand — Vibrant Purple Palette ═══ */
+  --brand-0: #FAF8FF;
+  --brand-100: #F0EBFF;
+  --brand-200: #E0D5FF;
+  --brand-300: #C9B8F8;
+  --brand-400: #A78BFA;
+  --brand-500: #8B5CF6;
+  --brand-600: #7C3AED;
+  --brand-700: #6D28D9;
+  --brand-800: #5B21B6;
+  --brand-900: #4C1D95;
 
+  /* ═══ Neutrals — warmer tints ═══ */
   --neutral-0: #FFFFFF;
-  --neutral-100: #F5F5F5;
-  --neutral-200: #ECECEC;
-  --neutral-300: #C2C5C4;
-  --neutral-400: #B3B3B3;
-  --neutral-500: #9C9C9C;
-  --neutral-600: #7F7F7F;
-  --neutral-700: #707070;
-  --neutral-800: #1A1A1A;
+  --neutral-50: #FAFAFB;
+  --neutral-100: #F4F4F6;
+  --neutral-200: #E8E8ED;
+  --neutral-300: #D1D1DB;
+  --neutral-400: #A1A1AA;
+  --neutral-500: #71717A;
+  --neutral-600: #52525B;
+  --neutral-700: #3F3F46;
+  --neutral-800: #18181B;
 
-  --green-100: #EFFBF7;
-  --green-300: #73DDBD;
-  --green-500: #2BAF87;
-  --green-700: #18906C;
+  /* ═══ Semantic Colours — vibrant ═══ */
+  --green-100: #ECFDF5;
+  --green-300: #6EE7B7;
+  --green-500: #10B981;
+  --green-600: #059669;
+  --green-700: #047857;
 
-  --red-100: #FFF1F1;
-  --red-300: #FF9EA8;
-  --red-500: #FF5567;
-  --red-700: #E82C3F;
+  --red-100: #FFF1F2;
+  --red-300: #FDA4AF;
+  --red-500: #F43F5E;
+  --red-700: #BE123C;
 
-  --blue-100: #EBF7FF;
-  --blue-300: #99D5FF;
-  --blue-500: #47B3FF;
-  --blue-700: #0C8EE9;
+  --blue-100: #EFF6FF;
+  --blue-300: #93C5FD;
+  --blue-500: #3B82F6;
+  --blue-700: #1D4ED8;
 
-  --orange-100: #FFF0E0;
-  --orange-300: #FDD8B0;
-  --orange-500: #FFA747;
-  --orange-700: #E88E2C;
+  --orange-100: #FFF7ED;
+  --orange-300: #FDBA74;
+  --orange-500: #F97316;
+  --orange-700: #C2410C;
 
-  /* shadcn/ui token mapping — Benable brand */
-  --background: #FFFFFF;
-  --foreground: #1A1A1A;
+  --pink-100: #FDF2F8;
+  --pink-300: #F9A8D4;
+  --pink-500: #EC4899;
+  --pink-700: #BE185D;
+
+  --yellow-100: #FEFCE8;
+  --yellow-300: #FDE047;
+  --yellow-500: #EAB308;
+
+  /* ═══ shadcn/ui token mapping — Benable brand ═══ */
+  --background: #FAFAFB;
+  --foreground: #18181B;
   --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
+  --card-foreground: #18181B;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
-  --primary: #AE94F9;
+  --popover-foreground: #18181B;
+  --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F5F5;
-  --secondary-foreground: #1A1A1A;
-  --muted: #F5F5F5;
-  --muted-foreground: #7F7F7F;
-  --accent: #EBE4FF;
-  --accent-foreground: #5E518E;
-  --destructive: #FF5567;
-  --border: #ECECEC;
-  --input: #ECECEC;
-  --ring: #AE94F9;
+  --secondary: #F0EBFF;
+  --secondary-foreground: #4C1D95;
+  --muted: #F4F4F6;
+  --muted-foreground: #71717A;
+  --accent: #E0D5FF;
+  --accent-foreground: #4C1D95;
+  --destructive: #F43F5E;
+  --border: #E8E8ED;
+  --input: #E8E8ED;
+  --ring: #7C3AED;
 
-  --chart-1: #AE94F9;
-  --chart-2: #2BAF87;
-  --chart-3: #47B3FF;
-  --chart-4: #FFA747;
-  --chart-5: #FF5567;
+  --chart-1: #7C3AED;
+  --chart-2: #10B981;
+  --chart-3: #3B82F6;
+  --chart-4: #F97316;
+  --chart-5: #F43F5E;
 
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A1A;
-  --sidebar-primary: #AE94F9;
+  --sidebar-foreground: #18181B;
+  --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F3FC;
-  --sidebar-accent-foreground: #5E518E;
-  --sidebar-border: #ECECEC;
-  --sidebar-ring: #AE94F9;
+  --sidebar-accent: #F0EBFF;
+  --sidebar-accent-foreground: #4C1D95;
+  --sidebar-border: #E8E8ED;
+  --sidebar-ring: #7C3AED;
 }
 
 @layer base {
@@ -133,20 +146,68 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Enter", "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 }
 
-/* Benable utility classes */
+/* ═══ Benable Utility Classes ═══ */
 .shadow-light-top {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 24px rgba(124,58,237,0.06);
 }
 .shadow-light-bottom {
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
 }
 .shadow-medium-top {
-  box-shadow: 0 16px 40px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 16px 40px rgba(124,58,237,0.10);
 }
 .shadow-dark-top {
   box-shadow: 0 8px 50px rgba(0,0,0,0.16);
+}
+.shadow-brand-glow {
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.12), 0 8px 30px rgba(124,58,237,0.15);
+}
+
+/* ═══ Fun gradient backgrounds ═══ */
+.bg-gradient-brand {
+  background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 50%, #C4B5FD 100%);
+}
+.bg-gradient-warm {
+  background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+}
+.bg-gradient-cool {
+  background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+}
+.bg-gradient-success {
+  background: linear-gradient(135deg, #10B981 0%, #6EE7B7 100%);
+}
+.bg-gradient-hero {
+  background: linear-gradient(135deg, #FAF8FF 0%, #F0EBFF 30%, #E0D5FF 100%);
+}
+.bg-gradient-sidebar {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8FF 100%);
+}
+
+/* ═══ Animated elements ═══ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes pulse-brand {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(124,58,237,0); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(124,58,237,0.08), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+.animate-pulse-brand {
+  animation: pulse-brand 2s ease-in-out infinite;
 }

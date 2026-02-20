@@ -577,7 +577,7 @@ export default function CampaignDetail() {
           variant="ghost"
           size="sm"
           asChild
-          className="mb-3 gap-1 text-[var(--neutral-500)] hover:text-[var(--neutral-800)] -ml-2"
+          className="mb-3 gap-1 text-[var(--neutral-500)] hover:text-[var(--brand-700)] -ml-2"
         >
           <Link to="/campaigns">
             <ArrowLeft className="size-3.5" /> All Campaigns
@@ -589,7 +589,7 @@ export default function CampaignDetail() {
               <h1 className="text-2xl font-bold text-[var(--neutral-800)]">
                 {campaign.title}
               </h1>
-              <Badge className={`border-0 text-xs font-medium ${campaignStatusStyle}`}>
+              <Badge className={`border-0 text-xs font-semibold ${campaignStatusStyle}`}>
                 {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
               </Badge>
               <Badge
@@ -604,7 +604,7 @@ export default function CampaignDetail() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 border-[var(--neutral-200)]">
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-lg border-[var(--brand-300)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
               <Send className="size-3.5" /> Invite Creators
             </Button>
           </div>
@@ -614,67 +614,43 @@ export default function CampaignDetail() {
       {/* Budget tracker */}
       <BudgetTracker campaign={campaign} />
 
-      {/* Metric cards with color coding */}
+      {/* Metric cards — colorful */}
       <div className="grid grid-cols-4 gap-4">
-        <Card className="border-[var(--neutral-200)]">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-[var(--neutral-800)]">{campaign.creators.length}</p>
-                <p className="text-xs text-[var(--neutral-500)]">Total Creators</p>
+        {[
+          { value: campaign.creators.length, label: "Total Creators", icon: Users, color: "var(--brand-600)", bg: "var(--brand-100)" },
+          { value: acceptedCount, label: "Accepted", icon: Check, color: "var(--green-600)", bg: "var(--green-100)" },
+          { value: contentCount, label: "Content Submitted", icon: ImageIcon, color: "var(--pink-500)", bg: "var(--pink-100)" },
+          { value: postedCount, label: "Posted", icon: TrendingUp, color: "var(--orange-500)", bg: "var(--orange-100)" },
+        ].map((metric) => (
+          <Card key={metric.label} className="border-[var(--neutral-200)] hover:shadow-medium-top transition-all overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-[var(--neutral-800)]">{metric.value}</p>
+                  <p className="text-xs text-[var(--neutral-500)]">{metric.label}</p>
+                </div>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: metric.bg }}
+                >
+                  <metric.icon className="size-5" style={{ color: metric.color }} />
+                </div>
               </div>
-              <Users className="size-5 text-[var(--neutral-400)]" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-[var(--neutral-200)]">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-2xl font-bold ${acceptedCount > 0 ? "text-[var(--green-500)]" : "text-[var(--neutral-800)]"}`}>{acceptedCount}</p>
-                <p className="text-xs text-[var(--neutral-500)]">Accepted</p>
-              </div>
-              <Check className="size-5 text-[var(--green-400)]" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className={`border-[var(--neutral-200)] ${contentCount > 0 ? "border-[var(--brand-300)]" : ""}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-2xl font-bold ${contentCount > 0 ? "text-[var(--brand-700)]" : "text-[var(--neutral-800)]"}`}>{contentCount}</p>
-                <p className="text-xs text-[var(--neutral-500)]">Content Submitted</p>
-              </div>
-              <ImageIcon className="size-5 text-[var(--brand-400)]" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-[var(--neutral-200)]">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-2xl font-bold ${postedCount > 0 ? "text-[var(--green-500)]" : "text-[var(--neutral-400)]"}`}>{postedCount}</p>
-                <p className="text-xs text-[var(--neutral-500)]">Posted</p>
-              </div>
-              <TrendingUp className="size-5 text-[var(--neutral-400)]" />
-            </div>
-            {postedCount === 0 && campaign.creators.length > 0 && (
-              <p className="mt-1 text-[10px] text-[var(--orange-500)]">Waiting for creators to post</p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="creators" className="space-y-6">
-        <TabsList className="bg-[var(--neutral-100)] p-1">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+        <TabsList className="bg-[var(--neutral-100)] p-1 rounded-xl">
+          <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--brand-700)]">
             Overview
           </TabsTrigger>
-          <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="creators" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--brand-700)]">
             Creators ({campaign.creators.length})
           </TabsTrigger>
-          <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="content" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--brand-700)]">
             Content Gallery ({contentCount})
           </TabsTrigger>
         </TabsList>
