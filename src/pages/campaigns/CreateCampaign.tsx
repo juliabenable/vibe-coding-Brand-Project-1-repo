@@ -33,6 +33,10 @@ import {
   Zap,
   Eye,
   Shield,
+  MessageSquare,
+  Heart,
+  Mail,
+  Sliders,
 } from "lucide-react";
 import {
   Select,
@@ -50,47 +54,79 @@ import {
   type ContentFormat,
 } from "@/store/campaign-store";
 
-// ─── Step indicator (colorful gradient style) ───
-function StepIndicator({ currentStep, totalSteps, stepLabel }: { currentStep: number; totalSteps: number; stepLabel: string }) {
-  const stepColors = [
-    { color: "var(--brand-600)", bg: "var(--brand-100)" },
-    { color: "var(--orange-500)", bg: "var(--orange-100)" },
-    { color: "var(--pink-500)", bg: "var(--pink-100)" },
-    { color: "var(--green-500)", bg: "var(--green-100)" },
-  ];
-  const current = stepColors[(currentStep - 1) % stepColors.length];
+// ─── Clickable step indicator (numbered circles like reference) ───
+const STEP_LABELS = ["Goals", "Details", "Brief", "Review"];
 
+function StepIndicator({
+  currentStep,
+  totalSteps,
+  onStepClick,
+}: {
+  currentStep: number;
+  totalSteps: number;
+  onStepClick: (step: number) => void;
+}) {
   return (
-    <div className="mb-8 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
-          style={{ background: `linear-gradient(135deg, ${current.color}, var(--brand-400))` }}
-        >
-          {currentStep}
-        </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--neutral-400)]">
-            Step {currentStep} of {totalSteps}
-          </p>
-          <p className="text-sm font-bold text-[var(--neutral-800)]">{stepLabel}</p>
-        </div>
-      </div>
-      {/* Progress bar with gradient */}
-      <div className="flex items-center gap-1.5">
-        {Array.from({ length: totalSteps }).map((_, i) => (
-          <div
-            key={i}
-            className="h-2 rounded-full transition-all"
-            style={{
-              width: i + 1 === currentStep ? 28 : 8,
-              background: i + 1 <= currentStep
-                ? `linear-gradient(90deg, var(--brand-600), var(--brand-400))`
-                : "var(--neutral-200)",
-            }}
-          />
-        ))}
-      </div>
+    <div className="mb-8 flex items-center justify-center gap-1">
+      {Array.from({ length: totalSteps }).map((_, i) => {
+        const stepNum = i + 1;
+        const isComplete = stepNum < currentStep;
+        const isCurrent = stepNum === currentStep;
+        const isPast = stepNum <= currentStep;
+        return (
+          <div key={i} className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (stepNum < currentStep) onStepClick(stepNum);
+              }}
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all"
+              style={{
+                backgroundColor: isCurrent
+                  ? "var(--brand-100)"
+                  : isComplete
+                    ? "var(--green-100)"
+                    : "transparent",
+                cursor: stepNum < currentStep ? "pointer" : "default",
+              }}
+            >
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all"
+                style={{
+                  backgroundColor: isComplete
+                    ? "var(--green-500)"
+                    : isCurrent
+                      ? "var(--brand-700)"
+                      : "var(--neutral-200)",
+                  color: isPast ? "white" : "var(--neutral-500)",
+                }}
+              >
+                {isComplete ? <Check className="size-3.5" /> : stepNum}
+              </div>
+              <span
+                className="text-xs font-semibold uppercase tracking-wide"
+                style={{
+                  color: isCurrent
+                    ? "var(--brand-700)"
+                    : isComplete
+                      ? "var(--green-700)"
+                      : "var(--neutral-400)",
+                }}
+              >
+                {STEP_LABELS[i]}
+              </span>
+            </button>
+            {i < totalSteps - 1 && (
+              <div
+                className="h-px w-10"
+                style={{
+                  backgroundColor: isComplete ? "var(--green-300)" : "var(--neutral-200)",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -129,9 +165,7 @@ const COMPENSATION_TILES: {
   { type: "commission_boost", label: "Commission Boost", icon: TrendingUp, color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0", iconBg: "#DDD0F7" },
 ];
 
-// ─── Campaign Goal tiles (icon-based, matching FindTalent design) ───
-import { MessageSquare, Heart } from "lucide-react";
-
+// ─── Campaign Goal tiles (icon-based) ───
 const GOAL_TILES: {
   value: CampaignGoal;
   icon: React.ElementType;
@@ -142,58 +176,49 @@ const GOAL_TILES: {
   borderColor: string;
 }[] = [
   {
-    value: "word_of_mouth",
-    icon: MessageSquare,
-    title: "Word of Mouth",
+    value: "word_of_mouth", icon: MessageSquare, title: "Word of Mouth",
     description: "Get genuine recommendations from trusted voices who love your product.",
     color: "var(--brand-700)", bgColor: "var(--brand-100)", borderColor: "var(--brand-400)",
   },
   {
-    value: "product_launch",
-    icon: Gift,
-    title: "Product Seeding",
+    value: "product_launch", icon: Gift, title: "Product Seeding",
     description: "Send products to creators for authentic reviews and unboxing content.",
     color: "var(--green-700)", bgColor: "var(--green-100)", borderColor: "var(--green-300)",
   },
   {
-    value: "ugc",
-    icon: Heart,
-    title: "Authentic UGC",
+    value: "ugc", icon: Heart, title: "Authentic UGC",
     description: "Real content from real people who love your product.",
     color: "#C2528B", bgColor: "#FDF2F8", borderColor: "#F9A8D4",
   },
   {
-    value: "awareness",
-    icon: Target,
-    title: "Reach a Niche Audience",
+    value: "awareness", icon: Target, title: "Reach a Niche Audience",
     description: "Connect with exactly the right people through influencer partnerships.",
     color: "var(--blue-700)", bgColor: "var(--blue-100)", borderColor: "var(--blue-300)",
   },
   {
-    value: "sales",
-    icon: Zap,
-    title: "Drive Sales",
+    value: "sales", icon: Zap, title: "Drive Sales",
     description: "Generate conversions and revenue through creator-driven promotions.",
     color: "var(--orange-700)", bgColor: "var(--orange-100)", borderColor: "var(--orange-300)",
   },
   {
-    value: "community",
-    icon: Users,
-    title: "Build Community",
+    value: "community", icon: Users, title: "Build Community",
     description: "Grow a loyal community around your brand with authentic connections.",
     color: "#7B61C2", bgColor: "#F3EEFF", borderColor: "#C9B8F0",
   },
 ];
 
-// ─── Content Niche suggested tags ───
-const NICHE_SUGGESTIONS = [
-  "Lifestyle", "Beauty", "Skincare", "Fashion", "Travel", "Wellness",
-  "Fitness", "Food & Drink", "Home & Decor", "Parenting", "Tech",
-  "Sustainability", "Pet Care", "Self-Care", "Haircare", "Fragrance",
+// ─── Content Niche suggested tags (grouped) ───
+const NICHE_SUGGESTIONS: { label: string; platform?: string }[] = [
+  { label: "Lifestyle" }, { label: "Beauty" }, { label: "Skincare" },
+  { label: "Fashion" }, { label: "Travel" }, { label: "Wellness" },
+  { label: "Fitness" }, { label: "Food & Drink" }, { label: "Home & Decor" },
+  { label: "Parenting" }, { label: "Tech" }, { label: "Sustainability" },
+  { label: "Pet Care" }, { label: "Self-Care" }, { label: "Haircare" },
+  { label: "Fragrance" },
 ];
 
 // ═══════════════════════════════════════════════════
-// STEP 1: Campaign Goals (full-page, typeform-style)
+// STEP 1: Campaign Goals
 // ═══════════════════════════════════════════════════
 function StepGoals({
   draft,
@@ -284,7 +309,7 @@ function StepGoals({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 2: Campaign Details (Mode + Basics + Content Format + Compensation)
+// STEP 2: Campaign Details
 // ═══════════════════════════════════════════════════
 function StepDetails({
   draft,
@@ -320,7 +345,7 @@ function StepDetails({
 
   const toggleContentFormat = (format: ContentFormat) => {
     const isBenable = format === "benable_post";
-    if (isBenable) return; // always included
+    if (isBenable) return;
     setDraft((prev) => {
       const has = prev.contentFormats.includes(format);
       const newFormats = has
@@ -339,7 +364,6 @@ function StepDetails({
     });
   };
 
-  // Deactivated modes
   const deactivatedModes: CampaignMode[] = ["open", "debut"];
   const activeComps = draft.compensationTypes.filter((c) => c.enabled);
 
@@ -370,7 +394,7 @@ function StepDetails({
               mode: "debut" as CampaignMode,
               icon: Sparkles,
               title: "Debut Collabs",
-              desc: "Work with rising creators who haven't done brand deals yet. Lower cost, authentic content.",
+              desc: "Work with rising creators who haven't done brand deals yet.",
               best: "Best for: authentic UGC, budget-friendly, discovering hidden gems",
               badge: "New",
             },
@@ -387,9 +411,7 @@ function StepDetails({
                       ? "cursor-pointer border-[var(--brand-700)] bg-[var(--brand-0)] shadow-light-top"
                       : "cursor-pointer border-[var(--neutral-200)] hover:border-[var(--brand-400)]"
                 }`}
-                onClick={() => {
-                  if (!isDisabled) update("mode", opt.mode);
-                }}
+                onClick={() => { if (!isDisabled) update("mode", opt.mode); }}
               >
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2 mb-2">
@@ -415,38 +437,36 @@ function StepDetails({
         </div>
       </div>
 
-      {/* Campaign Basics — only show after mode is selected */}
       {draft.mode && (
         <>
           <Separator className="bg-[var(--neutral-200)]" />
 
-          {/* Basic Info */}
-          <div className="space-y-5">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">Basic Information</h3>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-[var(--neutral-800)]">
-                Campaign Title <span className="text-[var(--brand-700)]">*</span>
-              </Label>
-              <Input
-                placeholder="e.g., Summer Glow Collection Launch"
-                className="border-[var(--neutral-200)] focus:border-[var(--brand-700)]"
-                value={draft.title}
-                onChange={(e) => update("title", e.target.value)}
-              />
-            </div>
+          {/* Campaign Title — more appealing */}
+          <div className="space-y-3">
+            <Label className="text-base font-bold text-[var(--neutral-800)]">
+              Campaign Title <span className="text-[var(--brand-700)]">*</span>
+            </Label>
+            <Input
+              placeholder="e.g., Summer Glow Collection Launch"
+              className="border-[var(--neutral-200)] focus:border-[var(--brand-700)] text-base h-12"
+              value={draft.title}
+              onChange={(e) => update("title", e.target.value)}
+            />
+            <p className="text-xs text-[var(--neutral-400)]">
+              Give your campaign a name that creators will see when they receive your invite.
+            </p>
           </div>
 
-          {/* Content Format — square tiles */}
+          {/* Content Format */}
           <Separator className="bg-[var(--neutral-200)]" />
-
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Format</h3>
               <p className="mt-1 text-sm text-[var(--neutral-500)]">
                 Select the types of content you'd like creators to produce.
               </p>
             </div>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="flex flex-wrap gap-3">
               {CONTENT_FORMAT_TILES.map((tile) => {
                 const isBenable = tile.value === "benable_post";
                 const selected = draft.contentFormats.includes(tile.value);
@@ -455,25 +475,24 @@ function StepDetails({
                     key={tile.value}
                     type="button"
                     onClick={() => toggleContentFormat(tile.value)}
-                    className="relative flex flex-col items-center gap-2.5 rounded-xl p-4 text-center transition-all"
+                    className="relative flex items-center gap-3 rounded-xl px-4 py-3 transition-all"
                     style={{
                       backgroundColor: selected ? tile.bgColor : "white",
                       border: `2px solid ${selected ? tile.borderColor : "var(--neutral-200)"}`,
-                      opacity: isBenable ? 1 : undefined,
                     }}
                   >
                     {selected && (
-                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
                         <Check className="size-3 text-white" />
                       </div>
                     )}
                     <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg"
                       style={{ backgroundColor: tile.iconBg }}
                     >
-                      <tile.icon className="size-5" style={{ color: tile.color }} />
+                      <tile.icon className="size-4" style={{ color: tile.color }} />
                     </div>
-                    <span className="text-xs font-semibold leading-tight" style={{ color: selected ? tile.color : "var(--neutral-700)" }}>
+                    <span className="text-sm font-semibold" style={{ color: selected ? tile.color : "var(--neutral-700)" }}>
                       {tile.label}
                     </span>
                     {isBenable && (
@@ -487,10 +506,9 @@ function StepDetails({
             </div>
           </div>
 
-          {/* Compensation — square tile grid */}
+          {/* Compensation */}
           <Separator className="bg-[var(--neutral-200)]" />
-
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <h3 className="text-base font-bold text-[var(--neutral-800)]">Compensation Structure</h3>
               <p className="mt-1 text-sm text-[var(--neutral-500)]">
@@ -498,7 +516,7 @@ function StepDetails({
               </p>
             </div>
 
-            <div className="grid grid-cols-5 gap-3">
+            <div className="flex flex-wrap gap-3">
               {COMPENSATION_TILES.map((tile) => {
                 const comp = draft.compensationTypes.find((c) => c.type === tile.type);
                 const active = comp?.enabled ?? false;
@@ -507,24 +525,24 @@ function StepDetails({
                     key={tile.type}
                     type="button"
                     onClick={() => toggleCompensation(tile.type, !active)}
-                    className="relative flex flex-col items-center gap-2.5 rounded-xl p-4 text-center transition-all"
+                    className="relative flex items-center gap-3 rounded-xl px-4 py-3 transition-all"
                     style={{
                       backgroundColor: active ? tile.bgColor : "white",
                       border: `2px solid ${active ? tile.borderColor : "var(--neutral-200)"}`,
                     }}
                   >
                     {active && (
-                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: tile.color }}>
                         <Check className="size-3 text-white" />
                       </div>
                     )}
                     <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg"
                       style={{ backgroundColor: tile.iconBg }}
                     >
-                      <tile.icon className="size-5" style={{ color: tile.color }} />
+                      <tile.icon className="size-4" style={{ color: tile.color }} />
                     </div>
-                    <span className="text-xs font-semibold" style={{ color: active ? tile.color : "var(--neutral-700)" }}>
+                    <span className="text-sm font-semibold" style={{ color: active ? tile.color : "var(--neutral-700)" }}>
                       {tile.label}
                     </span>
                   </button>
@@ -541,16 +559,11 @@ function StepDetails({
                     <div
                       key={comp.type}
                       className="rounded-xl p-4"
-                      style={{
-                        backgroundColor: tile.bgColor,
-                        border: `1px solid ${tile.borderColor}`,
-                      }}
+                      style={{ backgroundColor: tile.bgColor, border: `1px solid ${tile.borderColor}` }}
                     >
                       <div className="flex items-center gap-2 mb-3">
                         <tile.icon className="size-4" style={{ color: tile.color }} />
-                        <span className="text-sm font-semibold" style={{ color: tile.color }}>
-                          {tile.label}
-                        </span>
+                        <span className="text-sm font-semibold" style={{ color: tile.color }}>{tile.label}</span>
                       </div>
 
                       {comp.type === "gifted" && (
@@ -640,7 +653,7 @@ function StepDetails({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 3: Campaign Brief (with Creator Obligations + Content Niche)
+// STEP 3: Campaign Brief — redesigned obligations & niche
 // ═══════════════════════════════════════════════════
 function StepBrief({
   draft,
@@ -704,8 +717,15 @@ function StepBrief({
   };
 
   const filteredSuggestions = NICHE_SUGGESTIONS.filter(
-    (n) => n.toLowerCase().includes(nicheSearch.toLowerCase()) && !draft.contentNiches.includes(n)
+    (n) => n.label.toLowerCase().includes(nicheSearch.toLowerCase()) && !draft.contentNiches.includes(n.label)
   );
+
+  // Group obligations by platform — All first, then Instagram, then TikTok
+  const platformOrder = ["All", "Instagram", "TikTok", "Benable"];
+  const groupedObligations = platformOrder.map((plat) => ({
+    platform: plat,
+    obligations: draft.creatorObligations.filter((o) => o.platform === plat),
+  })).filter((g) => g.obligations.length > 0);
 
   return (
     <div className="space-y-8">
@@ -713,28 +733,24 @@ function StepBrief({
       <div className="space-y-5">
         <h3 className="text-base font-bold text-[var(--neutral-800)]">Campaign Brief</h3>
 
-        {/* Upload Brief */}
         <div className="space-y-2">
           <Label className="text-sm font-medium text-[var(--neutral-800)]">
             Upload Brief (optional)
           </Label>
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-100)] p-4">
+          <div className="flex items-center gap-3 rounded-lg border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-50)] p-4">
             <Upload className="size-5 text-[var(--neutral-400)]" />
             <div>
               <p className="text-sm text-[var(--neutral-600)]">
                 Drop your brief here or{" "}
-                <span className="cursor-pointer font-medium text-[var(--brand-700)]">
-                  browse files
-                </span>
+                <span className="cursor-pointer font-medium text-[var(--brand-700)]">browse files</span>
               </p>
               <p className="text-xs text-[var(--neutral-400)]">
-                Accepts .pdf, .docx. We'll extract key details and auto-populate the description below.
+                Accepts .pdf, .docx. We'll extract key details automatically.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Campaign Description */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium text-[var(--neutral-800)]">
@@ -747,8 +763,8 @@ function StepBrief({
             )}
           </div>
           <textarea
-            className="flex min-h-[160px] w-full rounded-lg border border-[var(--neutral-200)] bg-white px-3 py-3 text-sm text-[var(--neutral-800)] placeholder:text-[var(--neutral-400)] focus:border-[var(--brand-700)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-700)]"
-            placeholder="Describe your product, key talking points, and creative direction. Creators will use this to produce content."
+            className="flex min-h-[140px] w-full rounded-lg border border-[var(--neutral-200)] bg-white px-3 py-3 text-sm text-[var(--neutral-800)] placeholder:text-[var(--neutral-400)] focus:border-[var(--brand-700)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-700)]"
+            placeholder="Describe your product, key talking points, and creative direction..."
             value={draft.description}
             onChange={(e) => update("description", e.target.value)}
           />
@@ -760,119 +776,127 @@ function StepBrief({
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Creator Obligations — LTK-inspired */}
-      <div className="space-y-5">
+      {/* Creator Obligations — cleaner, grouped by platform, no emoji */}
+      <div className="space-y-4">
         <div>
-          <h3 className="text-base font-bold text-[var(--neutral-800)]">📋 Creator Obligations</h3>
+          <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Obligations</h3>
           <p className="mt-1 text-sm text-[var(--neutral-500)]">
-            Select the requirements creators must fulfill. These will be used to verify content compliance.
+            Select requirements creators must fulfill. Click to toggle.
           </p>
         </div>
 
-        <div className="space-y-2">
-          {draft.creatorObligations.map((obligation) => {
-            const active = obligation.enabled;
-            return (
-              <button
-                key={obligation.id}
-                type="button"
-                onClick={() => toggleObligation(obligation.id)}
-                className="flex w-full items-center gap-3 rounded-xl p-3.5 text-left transition-all"
-                style={{
-                  backgroundColor: active ? "var(--brand-0)" : "white",
-                  border: `1.5px solid ${active ? "var(--brand-400)" : "var(--neutral-200)"}`,
-                }}
-              >
-                <div
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all"
-                  style={{
-                    backgroundColor: active ? "var(--brand-700)" : "var(--neutral-100)",
-                    border: active ? "none" : "1.5px solid var(--neutral-300)",
-                  }}
-                >
-                  {active && <Check className="size-3.5 text-white" />}
-                </div>
-                <span className="text-lg">{obligation.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--neutral-800)]">{obligation.label}</p>
-                  <p className="text-xs text-[var(--neutral-500)]">{obligation.description}</p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="shrink-0 border-[var(--neutral-200)] bg-[var(--neutral-50)] text-[var(--neutral-500)] text-[10px]"
-                >
-                  {obligation.platform}
-                </Badge>
-              </button>
-            );
-          })}
-        </div>
+        {groupedObligations.map((group) => (
+          <div key={group.platform}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">
+              {group.platform}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {group.obligations.map((obligation) => {
+                const active = obligation.enabled;
+                return (
+                  <button
+                    key={obligation.id}
+                    type="button"
+                    onClick={() => toggleObligation(obligation.id)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
+                    style={{
+                      backgroundColor: active ? "var(--brand-0)" : "var(--neutral-50)",
+                      border: `1.5px solid ${active ? "var(--brand-400)" : "var(--neutral-200)"}`,
+                    }}
+                  >
+                    <div
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all"
+                      style={{
+                        backgroundColor: active ? "var(--brand-700)" : "white",
+                        border: active ? "none" : "1.5px solid var(--neutral-300)",
+                      }}
+                    >
+                      {active && <Check className="size-3 text-white" />}
+                    </div>
+                    <span className="text-sm text-[var(--neutral-700)]">{obligation.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         {/* Custom obligations */}
         {draft.customObligations.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">Custom Requirements</p>
-            {draft.customObligations.map((co, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-3 rounded-xl border-1.5 border-[var(--brand-400)] bg-[var(--brand-0)] p-3.5"
-              >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--brand-700)]">
-                  <Check className="size-3.5 text-white" />
-                </div>
-                <span className="text-lg">✏️</span>
-                <p className="flex-1 text-sm font-medium text-[var(--neutral-800)]">{co}</p>
-                <button
-                  type="button"
-                  onClick={() => removeCustomObligation(idx)}
-                  className="shrink-0 rounded-full p-1 hover:bg-[var(--neutral-100)]"
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">Custom</p>
+            <div className="grid grid-cols-2 gap-2">
+              {draft.customObligations.map((co, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 rounded-lg border-[1.5px] border-[var(--brand-400)] bg-[var(--brand-0)] px-3 py-2.5"
                 >
-                  <X className="size-3.5 text-[var(--neutral-400)]" />
-                </button>
-              </div>
-            ))}
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[var(--brand-700)]">
+                    <Check className="size-3 text-white" />
+                  </div>
+                  <span className="flex-1 text-sm text-[var(--neutral-700)]">{co}</span>
+                  <button type="button" onClick={() => removeCustomObligation(idx)} className="shrink-0 rounded p-0.5 hover:bg-[var(--neutral-100)]">
+                    <X className="size-3.5 text-[var(--neutral-400)]" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Add custom */}
+        {/* Add custom — styled like existing obligations */}
         <div className="flex items-center gap-2">
-          <Input
-            placeholder="Add a custom obligation..."
-            className="border-[var(--neutral-200)] text-sm"
-            value={customObligation}
-            onChange={(e) => setCustomObligation(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addCustomObligation();
-              }
-            }}
-          />
+          <div className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[var(--neutral-300)] bg-[var(--neutral-50)] px-3 py-2">
+            <Plus className="size-4 text-[var(--neutral-400)]" />
+            <input
+              className="flex-1 bg-transparent text-sm text-[var(--neutral-700)] placeholder:text-[var(--neutral-400)] outline-none"
+              placeholder="Add a custom obligation..."
+              value={customObligation}
+              onChange={(e) => setCustomObligation(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addCustomObligation(); }
+              }}
+            />
+          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 gap-1.5 border-[var(--brand-400)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
+            className="shrink-0 border-[var(--brand-400)] text-[var(--brand-700)] hover:bg-[var(--brand-0)]"
             onClick={addCustomObligation}
             disabled={!customObligation.trim()}
           >
-            <Plus className="size-3.5" /> Add
+            Add
           </Button>
         </div>
       </div>
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Content Niche */}
-      <div className="space-y-5">
+      {/* Content Niche — reference design: search top, selected below with X, suggestions with + */}
+      <div className="space-y-4">
         <div>
-          <h3 className="text-base font-bold text-[var(--neutral-800)]">🎯 Content Niche</h3>
+          <h3 className="text-base font-bold text-[var(--neutral-800)]">Content Niche</h3>
           <p className="mt-1 text-sm text-[var(--neutral-500)]">
-            What content categories should creators be in? This helps us find the best matches.
+            What content categories should creators be in?
           </p>
         </div>
 
-        {/* Selected niches */}
+        {/* Search input at top */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--neutral-400)]" />
+          <Input
+            placeholder="Search or add a niche..."
+            className="border-[var(--neutral-200)] pl-10 text-sm"
+            value={nicheSearch}
+            onChange={(e) => setNicheSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); addCustomNiche(nicheSearch); }
+            }}
+          />
+        </div>
+
+        {/* Selected niches — shown as removable tags */}
         {draft.contentNiches.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {draft.contentNiches.map((niche) => (
@@ -888,62 +912,50 @@ function StepBrief({
           </div>
         )}
 
-        {/* Search input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--neutral-400)]" />
-          <Input
-            placeholder="Search or add a niche..."
-            className="border-[var(--neutral-200)] pl-10 text-sm"
-            value={nicheSearch}
-            onChange={(e) => setNicheSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addCustomNiche(nicheSearch);
-              }
-            }}
-          />
-        </div>
-
-        {/* Suggested tags */}
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--neutral-400)]">
-            Suggested
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {filteredSuggestions.map((niche) => (
-              <button
-                key={niche}
-                type="button"
-                onClick={() => toggleNiche(niche)}
-                className="rounded-full border border-[var(--neutral-200)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--neutral-600)] transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-0)] hover:text-[var(--brand-700)]"
-              >
-                + {niche}
-              </button>
-            ))}
-          </div>
+        {/* Suggested tags — with + prefix */}
+        <div className="flex flex-wrap gap-2">
+          {filteredSuggestions.map((niche) => (
+            <button
+              key={niche.label}
+              type="button"
+              onClick={() => toggleNiche(niche.label)}
+              className="flex items-center gap-1 rounded-full border border-[var(--neutral-200)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--neutral-600)] transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-0)] hover:text-[var(--brand-700)]"
+            >
+              <Plus className="size-3" />
+              {niche.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <Separator className="bg-[var(--neutral-200)]" />
 
-      {/* Creator Count */}
+      {/* Creator Count — redesigned, no increment buttons */}
       <div className="space-y-4">
-        <h3 className="text-base font-bold text-[var(--neutral-800)]">👥 Creator Count</h3>
-        <div className="max-w-xs space-y-2">
-          <Label className="text-sm font-medium text-[var(--neutral-800)]">
-            How many creators?
-          </Label>
-          <Input
-            type="number"
-            placeholder="e.g., 10"
-            className="border-[var(--neutral-200)]"
-            value={draft.creatorCount || ""}
-            onChange={(e) => update("creatorCount", Number(e.target.value))}
-          />
-          <p className="text-xs text-[var(--neutral-500)]">
-            Approximate number — we'll recommend the best matches.
-          </p>
+        <h3 className="text-base font-bold text-[var(--neutral-800)]">Creator Count</h3>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--neutral-200)] bg-[var(--neutral-50)] p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-100)]">
+              <Sliders className="size-5 text-[var(--brand-700)]" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-[var(--neutral-800)]">How many creators?</Label>
+              <p className="text-xs text-[var(--neutral-400)]">We'll recommend the best matches</p>
+            </div>
+          </div>
+          <Select
+            value={String(draft.creatorCount || "")}
+            onValueChange={(v) => update("creatorCount", Number(v))}
+          >
+            <SelectTrigger className="w-36 h-12 text-base font-semibold border-[var(--neutral-200)]">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 10, 15, 20, 25, 30, 50].map((n) => (
+                <SelectItem key={n} value={String(n)}>{n} creators</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
@@ -951,7 +963,7 @@ function StepBrief({
 }
 
 // ═══════════════════════════════════════════════════
-// STEP 4: Review & Launch (card-based layout with emoji headers)
+// STEP 4: Review & Launch — less white, more color
 // ═══════════════════════════════════════════════════
 function StepReview({
   draft,
@@ -961,36 +973,57 @@ function StepReview({
   onBack: (step: number) => void;
 }) {
   const goalLabels: Record<string, string> = {
-    awareness: "Brand Awareness",
-    sales: "Drive Sales",
-    product_launch: "Product Seeding",
-    ugc: "Content Creation",
-    word_of_mouth: "Word of Mouth",
-    community: "Community Building",
+    awareness: "Brand Awareness", sales: "Drive Sales",
+    product_launch: "Product Seeding", ugc: "Content Creation",
+    word_of_mouth: "Word of Mouth", community: "Community Building",
   };
 
   const compLabels: Record<CompensationType, string> = {
-    gifted: "Gifted Product",
-    gift_card: "Gift Card",
-    discount: "Discount Code",
-    paid: "Paid Fee",
-    commission_boost: "Commission Boost",
+    gifted: "Gifted Product", gift_card: "Gift Card", discount: "Discount Code",
+    paid: "Paid Fee", commission_boost: "Commission Boost",
   };
 
   const formatLabel: Record<ContentFormat, string> = {
-    instagram_post: "IG Post",
-    instagram_reel: "IG Reel",
-    instagram_story: "IG Story",
-    tiktok_video: "TikTok Video",
+    instagram_post: "IG Post", instagram_reel: "IG Reel",
+    instagram_story: "IG Story", tiktok_video: "TikTok Video",
     benable_post: "Benable Post",
   };
 
   const enabledComps = draft.compensationTypes.filter((c) => c.enabled);
   const enabledObligations = draft.creatorObligations.filter((o) => o.enabled);
 
+  // Review card component with subtle bg
+  const ReviewCard = ({
+    title,
+    editStep,
+    bgColor,
+    borderColor,
+    children,
+  }: {
+    title: string;
+    editStep: number;
+    bgColor: string;
+    borderColor: string;
+    children: React.ReactNode;
+  }) => (
+    <Card className="overflow-hidden" style={{ borderColor }}>
+      <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: bgColor }}>
+        <h3 className="text-sm font-bold text-[var(--neutral-800)]">{title}</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)] h-7"
+          onClick={() => onBack(editStep)}
+        >
+          Edit
+        </Button>
+      </div>
+      <CardContent className="p-5">{children}</CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-5">
-      {/* Campaign title header */}
+    <div className="space-y-4">
       <div className="text-center py-2">
         <p className="text-sm text-[var(--neutral-500)] mb-1">Ready to launch</p>
         <h2 className="text-2xl font-bold text-[var(--neutral-800)]">
@@ -998,20 +1031,8 @@ function StepReview({
         </h2>
       </div>
 
-      {/* Goals Card */}
-      <Card className="border-[var(--neutral-200)] shadow-light-top">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">🎯 Campaign Goals</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-              onClick={() => onBack(1)}
-            >
-              Edit
-            </Button>
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <ReviewCard title="Campaign Goals" editStep={1} bgColor="var(--brand-0)" borderColor="var(--brand-200)">
           <div className="flex flex-wrap gap-1.5">
             {draft.goals.length > 0
               ? draft.goals.map((g) => (
@@ -1021,70 +1042,38 @@ function StepReview({
                 ))
               : <span className="text-sm text-[var(--neutral-400)]">No goals selected</span>}
           </div>
-        </CardContent>
-      </Card>
+        </ReviewCard>
 
-      {/* Campaign Setup Card */}
-      <Card className="border-[var(--neutral-200)] shadow-light-top">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">⚙️ Campaign Setup</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-              onClick={() => onBack(2)}
-            >
-              Edit
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <ReviewCard title="Campaign Setup" editStep={2} bgColor="var(--blue-100)" borderColor="var(--blue-200)">
+          <div className="space-y-3 text-sm">
             <div>
-              <p className="text-[var(--neutral-500)]">Mode</p>
+              <p className="text-[var(--neutral-500)] text-xs">Mode</p>
               <p className="font-medium text-[var(--neutral-800)] capitalize">
                 {draft.mode === "debut" ? "Debut Collabs" : draft.mode ? `${draft.mode} Campaign` : "—"}
               </p>
             </div>
             <div>
-              <p className="text-[var(--neutral-500)]">Content Formats</p>
-              <div className="flex gap-1.5 mt-0.5 flex-wrap">
+              <p className="text-[var(--neutral-500)] text-xs">Content Formats</p>
+              <div className="flex gap-1.5 mt-1 flex-wrap">
                 {draft.contentFormats.map((f) => (
-                  <Badge key={f} variant="outline" className="border-[var(--neutral-200)] text-xs">
+                  <Badge key={f} variant="outline" className="border-[var(--neutral-200)] text-[10px]">
                     {formatLabel[f]}
                   </Badge>
                 ))}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </ReviewCard>
 
-      {/* Compensation Card */}
-      {enabledComps.length > 0 && (
-        <Card className="border-[var(--neutral-200)] shadow-light-top">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-[var(--neutral-800)]">💰 Compensation</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-                onClick={() => onBack(2)}
-              >
-                Edit
-              </Button>
-            </div>
+        {enabledComps.length > 0 && (
+          <ReviewCard title="Compensation" editStep={2} bgColor="var(--green-100)" borderColor="var(--green-200)">
             <div className="space-y-2">
               {enabledComps.map((comp) => {
                 let detail = "";
-                if (comp.type === "gifted" && comp.productName)
-                  detail = ` — ${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
-                if (comp.type === "gift_card" && comp.giftCardValue)
-                  detail = ` — $${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
-                if (comp.type === "paid" && comp.feeMin)
-                  detail = ` — $${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
-                if (comp.type === "commission_boost" && comp.commissionRate)
-                  detail = ` — ${comp.commissionRate}%`;
+                if (comp.type === "gifted" && comp.productName) detail = ` — ${comp.productName} (~$${comp.estValuePerUnit || 0}/unit)`;
+                if (comp.type === "gift_card" && comp.giftCardValue) detail = ` — $${comp.giftCardValue}${comp.giftCardBrand ? ` at ${comp.giftCardBrand}` : ""}`;
+                if (comp.type === "paid" && comp.feeMin) detail = ` — $${comp.feeMin}${comp.feeMax ? `–$${comp.feeMax}` : ""}/creator`;
+                if (comp.type === "commission_boost" && comp.commissionRate) detail = ` — ${comp.commissionRate}%`;
                 return (
                   <p key={comp.type} className="text-sm text-[var(--neutral-800)]">
                     {compLabels[comp.type]}{detail}
@@ -1092,114 +1081,68 @@ function StepReview({
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </ReviewCard>
+        )}
 
-      {/* Brief Card */}
-      <Card className="border-[var(--neutral-200)] shadow-light-top">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">📝 Campaign Brief</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-              onClick={() => onBack(3)}
-            >
-              Edit
-            </Button>
-          </div>
-          <p className="text-sm text-[var(--neutral-800)] line-clamp-3">
+        <ReviewCard title="Campaign Brief" editStep={3} bgColor="var(--orange-100)" borderColor="var(--orange-200)">
+          <p className="text-sm text-[var(--neutral-800)] line-clamp-4">
             {draft.description || "No description provided."}
           </p>
-        </CardContent>
-      </Card>
+        </ReviewCard>
 
-      {/* Creator Obligations Card */}
-      <Card className="border-[var(--neutral-200)] shadow-light-top">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">📋 Creator Obligations</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-              onClick={() => onBack(3)}
-            >
-              Edit
-            </Button>
-          </div>
+        <ReviewCard title="Creator Obligations" editStep={3} bgColor="#F3EEFF" borderColor="#C9B8F0">
           {enabledObligations.length > 0 || draft.customObligations.length > 0 ? (
             <div className="space-y-1.5">
               {enabledObligations.map((o) => (
                 <div key={o.id} className="flex items-center gap-2 text-sm">
                   <Check className="size-3.5 text-[var(--green-700)]" />
-                  <span className="text-[var(--neutral-800)]">{o.label}</span>
+                  <span className="text-[var(--neutral-700)]">{o.label}</span>
                 </div>
               ))}
               {draft.customObligations.map((co, idx) => (
                 <div key={`custom-${idx}`} className="flex items-center gap-2 text-sm">
                   <Check className="size-3.5 text-[var(--green-700)]" />
-                  <span className="text-[var(--neutral-800)]">{co}</span>
+                  <span className="text-[var(--neutral-700)]">{co}</span>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-sm text-[var(--neutral-400)]">No obligations set</p>
           )}
-        </CardContent>
-      </Card>
+        </ReviewCard>
 
-      {/* Content Niche & Creators Card */}
-      <Card className="border-[var(--neutral-200)] shadow-light-top">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[var(--neutral-800)]">🎨 Content Niche & Creators</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-[var(--brand-700)] hover:text-[var(--brand-800)]"
-              onClick={() => onBack(3)}
-            >
-              Edit
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <ReviewCard title="Content Niche & Creators" editStep={3} bgColor="var(--neutral-100)" borderColor="var(--neutral-200)">
+          <div className="space-y-3 text-sm">
             <div>
-              <p className="text-[var(--neutral-500)]">Niches</p>
+              <p className="text-[var(--neutral-500)] text-xs">Niches</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {draft.contentNiches.length > 0
                   ? draft.contentNiches.map((n) => (
-                      <Badge key={n} variant="outline" className="border-[var(--neutral-200)] text-xs">
-                        {n}
-                      </Badge>
+                      <Badge key={n} variant="outline" className="border-[var(--neutral-200)] text-[10px]">{n}</Badge>
                     ))
                   : <span className="text-[var(--neutral-400)]">—</span>}
               </div>
             </div>
             <div>
-              <p className="text-[var(--neutral-500)]">Number of Creators</p>
-              <p className="font-medium text-[var(--neutral-800)]">
-                {draft.creatorCount || "—"}
-              </p>
+              <p className="text-[var(--neutral-500)] text-xs">Number of Creators</p>
+              <p className="font-medium text-[var(--neutral-800)]">{draft.creatorCount || "—"}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </ReviewCard>
+      </div>
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════
-// AI MATCHING SCREEN (animated "finding creators" state)
+// AI MATCHING SCREEN — slower progress, email message
 // ═══════════════════════════════════════════════════
 const AI_STEPS = [
-  { label: "Analyzing your brand vibe", icon: Brain, duration: 2000 },
-  { label: "Scanning creator network", icon: Users, duration: 2500 },
-  { label: "Filtering by content niche", icon: Search, duration: 2000 },
-  { label: "Predicting engagement & ROI", icon: Zap, duration: 2500 },
-  { label: "Finalizing recommendations", icon: Sparkles, duration: 2000 },
+  { label: "Analyzing your brand vibe", icon: Brain, duration: 4000 },
+  { label: "Scanning creator network", icon: Users, duration: 5000 },
+  { label: "Filtering by content niche", icon: Search, duration: 4000 },
+  { label: "Predicting engagement & ROI", icon: Zap, duration: 5000 },
+  { label: "Finalizing recommendations", icon: Sparkles, duration: 4000 },
 ];
 
 function AIMatchingScreen() {
@@ -1210,7 +1153,6 @@ function AIMatchingScreen() {
   useEffect(() => {
     const totalDuration = AI_STEPS.reduce((sum, s) => sum + s.duration, 0);
     let elapsed = 0;
-
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     AI_STEPS.forEach((step, idx) => {
@@ -1221,18 +1163,18 @@ function AIMatchingScreen() {
       elapsed += step.duration;
     });
 
-    // Progress bar animation
+    // Slower progress bar
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
-        return prev + 100 / (totalDuration / 80);
+        return prev + 100 / (totalDuration / 150);
       });
-    }, 80);
+    }, 150);
 
     // Navigate after done
     const navTimer = setTimeout(() => {
       navigate("/campaigns/camp-001/find-talent");
-    }, totalDuration + 1500);
+    }, totalDuration + 2000);
     timers.push(navTimer);
 
     return () => {
@@ -1246,10 +1188,8 @@ function AIMatchingScreen() {
       {/* Animated brand circle */}
       <div className="relative mb-8">
         <div
-          className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-brand shadow-brand-glow"
-          style={{
-            animation: "pulse 2s ease-in-out infinite",
-          }}
+          className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[var(--brand-700)]"
+          style={{ animation: "pulse 2.5s ease-in-out infinite" }}
         >
           <Sparkles className="size-10 text-white" />
         </div>
@@ -1258,9 +1198,17 @@ function AIMatchingScreen() {
       <h2 className="text-2xl font-bold text-[var(--neutral-800)] mb-2">
         Benable AI is finding your creators
       </h2>
-      <p className="max-w-md text-center text-sm text-[var(--neutral-500)] mb-8">
-        We're matching your campaign with the best creators on our network. You'll be notified when we have recommended creators for you.
+      <p className="max-w-md text-center text-sm text-[var(--neutral-500)] mb-2">
+        We're matching your campaign with the best creators on our network.
       </p>
+
+      {/* Email notification message */}
+      <div className="flex items-center gap-2 rounded-full bg-[var(--blue-100)] px-4 py-2 mb-8">
+        <Mail className="size-4 text-[var(--blue-700)]" />
+        <span className="text-xs font-medium text-[var(--blue-700)]">
+          You'll receive an email when your matches are ready
+        </span>
+      </div>
 
       {/* Progress bar */}
       <div className="w-full max-w-md mb-8">
@@ -1269,8 +1217,8 @@ function AIMatchingScreen() {
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(progress, 100)}%`,
-              background: "linear-gradient(90deg, var(--brand-600), var(--pink-500), var(--orange-500))",
-              transition: "width 0.15s linear",
+              background: "var(--brand-600)",
+              transition: "width 0.2s linear",
             }}
           />
         </div>
@@ -1296,7 +1244,7 @@ function AIMatchingScreen() {
               }}
             >
               <div
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
                 style={{
                   backgroundColor: isDone ? "var(--green-100)" : isActive ? "var(--brand-100)" : "var(--neutral-100)",
                 }}
@@ -1307,12 +1255,7 @@ function AIMatchingScreen() {
                   <step.icon className="size-3.5" style={{ color: isActive ? "var(--brand-700)" : "var(--neutral-400)" }} />
                 )}
               </div>
-              <span
-                className="text-sm font-medium"
-                style={{
-                  color: isDone ? "var(--green-700)" : isActive ? "var(--brand-700)" : "var(--neutral-400)",
-                }}
-              >
+              <span className="text-sm font-medium" style={{ color: isDone ? "var(--green-700)" : isActive ? "var(--brand-700)" : "var(--neutral-400)" }}>
                 {step.label}
               </span>
               {isActive && (
@@ -1336,7 +1279,7 @@ function AIMatchingScreen() {
         ].map((card, idx) => (
           <div
             key={idx}
-            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--neutral-200)] bg-white p-4 text-center hover:shadow-medium-top transition-shadow"
+            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--neutral-200)] bg-white p-4 text-center"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: card.bg }}>
               <card.icon className="size-5" style={{ color: card.color }} />
@@ -1347,7 +1290,6 @@ function AIMatchingScreen() {
         ))}
       </div>
 
-      {/* Pulse animation keyframes */}
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); }
@@ -1361,8 +1303,6 @@ function AIMatchingScreen() {
 // ═══════════════════════════════════════════════════
 // MAIN CREATE CAMPAIGN PAGE
 // ═══════════════════════════════════════════════════
-const STEP_LABELS = ["Campaign Goals", "Campaign Details", "Campaign Brief", "Review & Launch"];
-
 export default function CreateCampaign() {
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<CampaignDraft>({ ...emptyCampaignDraft });
@@ -1381,7 +1321,6 @@ export default function CreateCampaign() {
     return <AIMatchingScreen />;
   }
 
-  // Button labels per step
   const nextLabel = (() => {
     switch (step) {
       case 1: return "Next: Campaign Details";
@@ -1391,7 +1330,6 @@ export default function CreateCampaign() {
     }
   })();
 
-  // Can proceed? Step 1 requires at least one goal
   const canProceed = (() => {
     if (step === 1) return draft.goals.length > 0;
     if (step === 2) return !!draft.mode;
@@ -1400,37 +1338,28 @@ export default function CreateCampaign() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand shadow-brand-glow">
-            <Sparkles className="size-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
-              Create Campaign
-            </h1>
-            <p className="mt-1 text-sm text-[var(--neutral-500)]">
-              Set up a new creator collaboration campaign.
-            </p>
-          </div>
-        </div>
+      {/* Page title — no gradient icon */}
+      <div>
+        <h1 className="text-[28px] font-bold text-[var(--neutral-800)]">
+          Create Campaign
+        </h1>
+        <p className="mt-1 text-sm text-[var(--neutral-500)]">
+          Set up a new creator collaboration campaign.
+        </p>
       </div>
 
-      <StepIndicator currentStep={step} totalSteps={totalSteps} stepLabel={STEP_LABELS[step - 1]} />
+      {/* Clickable step indicator */}
+      <StepIndicator currentStep={step} totalSteps={totalSteps} onStepClick={goToStep} />
 
       {step === 1 && <StepGoals draft={draft} setDraft={setDraft} />}
       {step === 2 && <StepDetails draft={draft} setDraft={setDraft} />}
       {step === 3 && <StepBrief draft={draft} setDraft={setDraft} />}
       {step === 4 && <StepReview draft={draft} onBack={goToStep} />}
 
-      {/* Navigation buttons */}
+      {/* Navigation buttons — solid colors, no gradients */}
       <div className="flex items-center justify-between pt-4 border-t border-[var(--neutral-200)]">
         {step > 1 ? (
-          <Button
-            variant="outline"
-            className="gap-2 border-[var(--neutral-200)]"
-            onClick={goBack}
-          >
+          <Button variant="outline" className="gap-2 border-[var(--neutral-200)]" onClick={goBack}>
             <ArrowLeft className="size-4" /> Back
           </Button>
         ) : (
@@ -1439,7 +1368,7 @@ export default function CreateCampaign() {
 
         {step < totalSteps ? (
           <Button
-            className="gap-2 rounded-xl bg-gradient-brand shadow-brand-glow hover:opacity-90 transition-opacity"
+            className="gap-2 rounded-xl bg-[var(--brand-700)] text-white hover:bg-[var(--brand-800)] transition-colors"
             onClick={goNext}
             disabled={!canProceed}
           >
@@ -1448,7 +1377,7 @@ export default function CreateCampaign() {
           </Button>
         ) : (
           <Button
-            className="gap-2 rounded-xl bg-gradient-warm shadow-brand-glow hover:opacity-90 transition-opacity"
+            className="gap-2 rounded-xl bg-[var(--brand-700)] text-white hover:bg-[var(--brand-800)] transition-colors"
             onClick={handleLaunch}
           >
             <Sparkles className="size-4" /> Launch & Find Creators
